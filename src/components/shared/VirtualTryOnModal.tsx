@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { GoogleGenAI } from '@google/genai';
+import { getAccessToken, generateContent, QuotaExceededError } from '../../utils/auth-utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Sparkles, Upload, Loader2, Download } from 'lucide-react';
@@ -16,6 +16,7 @@ export const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ productNam
   const [status, setStatus] = useState<'idle' | 'analyzing' | 'generating' | 'success' | 'error'>('idle');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [agentPrompt, setAgentPrompt] = useState<string | null>(null);
+  const [showQuotaUI, setShowQuotaUI] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,9 +62,10 @@ export const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ productNam
 
     try {
       setStatus('analyzing');
+      setShowQuotaUI(false);
       
-      // Initialize Gemini API
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      // Get OAuth Access Token for Gemini Connect
+      const accessToken = await getAccessToken();
       
       // Convert product image URL to base64
       const productBase64Full = await getBase64FromUrl(productImageUrl);
@@ -71,51 +73,57 @@ export const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ productNam
       const userBase64Data = userImage.split(',')[1];
 
       // Agent 1: Prompt Engineer (Analyzes both images and writes a prompt)
-      const agent1Response = await ai.models.generateContent({
+      const agent1Response = await generateContent(accessToken, {
         model: 'gemini-3.1-pro-preview',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                data: userBase64Data,
-                mimeType: 'image/jpeg'
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  data: userBase64Data,
+                  mimeType: 'image/jpeg'
+                }
+              },
+              {
+                inlineData: {
+                  data: productBase64Data,
+                  mimeType: 'image/jpeg'
+                }
+              },
+              {
+                text: `You are an expert fashion AI prompt engineer. Look at Image 1 (the user) and Image 2 (the product: ${productName}). Write a highly detailed image generation prompt that describes the user (their pose, hair, skin tone, expression) wearing the exact product shown in Image 2 (mentioning its color, texture, style, and fit). The prompt should be optimized for an image-to-image AI model. Output ONLY the prompt text, nothing else.`
               }
-            },
-            {
-              inlineData: {
-                data: productBase64Data,
-                mimeType: 'image/jpeg'
-              }
-            },
-            {
-              text: `You are an expert fashion AI prompt engineer. Look at Image 1 (the user) and Image 2 (the product: ${productName}). Write a highly detailed image generation prompt that describes the user (their pose, hair, skin tone, expression) wearing the exact product shown in Image 2 (mentioning its color, texture, style, and fit). The prompt should be optimized for an image-to-image AI model. Output ONLY the prompt text, nothing else.`
-            }
-          ]
-        }
+            ]
+          }
+        ]
       });
 
-      const generatedPrompt = agent1Response.text?.trim();
+      const generatedPrompt = agent1Response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (!generatedPrompt) throw new Error("Failed to generate prompt");
       
       setAgentPrompt(generatedPrompt);
       setStatus('generating');
 
       // Agent 2: Image Generator
-      const agent2Response = await ai.models.generateContent({
+      const agent2Response = await generateContent(accessToken, {
         model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                data: userBase64Data,
-                mimeType: 'image/jpeg'
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  data: userBase64Data,
+                  mimeType: 'image/jpeg'
+                }
+              },
+              {
+                text: `Modify this person to be wearing the following outfit seamlessly. Keep their face and body identical. Outfit description: ${generatedPrompt}`
               }
-            },
-            {
-              text: `Modify this person to be wearing the following outfit seamlessly. Keep their face and body identical. Outfit description: ${generatedPrompt}`
-            }
-          ]
-        }
+            ]
+          }
+        ]
       });
 
       let finalImageBase64 = null;
@@ -138,8 +146,13 @@ export const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ productNam
 
     } catch (error: any) {
       console.error('Try-on error:', error);
-      setStatus('error');
-      toast.error(error.message || 'Failed to generate virtual try-on');
+      if (error instanceof QuotaExceededError || error.name === 'QuotaExceededError') {
+        setShowQuotaUI(true);
+        setStatus('idle');
+      } else {
+        setStatus('error');
+        toast.error(error.message || 'Failed to generate virtual try-on');
+      }
     }
   };
 
@@ -234,6 +247,26 @@ export const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ productNam
             <div className="glass p-4 rounded-2xl border border-white/5 text-left">
               <p className="text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-2">Agent 1 Prompt:</p>
               <p className="text-slate-400 text-xs italic leading-relaxed">"{agentPrompt}"</p>
+            </div>
+          )}
+
+          {/* Quota Exceeded UI */}
+          {showQuotaUI && (
+            <div className="mt-6 p-1 rounded-2xl" style={{ background: 'conic-gradient(from 0deg at 50% 50%, #323336 19.35%, #4285F4 31.96%, #1AA64A 53.75%, #323336 74.94%, #FCBD00 81.08%, #DB372D 89.49%, #323336 100%)' }}>
+              <div className="bg-[#050505] rounded-xl p-6 text-center">
+                <h4 className="text-white text-sm font-normal mb-2">Upgrade to continue your flow</h4>
+                <p className="text-slate-400 text-sm font-normal mb-6">
+                  You’ve reached your AI usage limit for the day, you can wait for it to reset or upgrade to continue and unlock even more.
+                </p>
+                <a 
+                  href="https://one.google.com/ai?utm_source=ai_studio" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-block bg-white text-black px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Continue to upgrade
+                </a>
+              </div>
             </div>
           )}
 

@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '../ui/sheet';
 
 export const Navbar = () => {
   const { user } = useAuth();
@@ -47,6 +47,7 @@ export const Navbar = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] glass border-white/10">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <div className="flex flex-col gap-8 mt-12">
                 <NavLinks />
               </div>
