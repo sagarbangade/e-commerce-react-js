@@ -35,7 +35,7 @@ export const AdminProducts = () => {
     category: '',
     stock: '',
     featured: false,
-    imageUrl: '',
+    imageUrls: [] as string[],
   });
 
   useEffect(() => {
@@ -43,7 +43,12 @@ export const AdminProducts = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const productsData: Product[] = [];
       snapshot.forEach((doc) => {
-        productsData.push({ id: doc.id, ...doc.data() } as Product);
+        const data = doc.data();
+        productsData.push({ 
+          id: doc.id, 
+          ...data,
+          imageUrls: data.imageUrls || [data.imageUrl].filter(Boolean)
+        } as Product);
       });
       setProducts(productsData);
       setLoading(false);
@@ -62,39 +67,70 @@ export const AdminProducts = () => {
         category: product.category,
         stock: product.stock.toString(),
         featured: product.featured,
-        imageUrl: product.imageUrl,
+        imageUrls: product.imageUrls || [product.imageUrl].filter(Boolean),
       });
     } else {
       setEditingProduct(null);
       setFormData({
-        name: '', description: '', price: '', discountPrice: '', category: '', stock: '', featured: false, imageUrl: '',
+        name: '', description: '', price: '', discountPrice: '', category: '', stock: '', featured: false, imageUrls: [],
       });
     }
     setIsSheetOpen(true);
   };
 
-  const handleImageUpload = () => {
-    // @ts-ignore
-    window.cloudinary.createUploadWidget(
-      {
-        cloudName: CLOUD_NAME,
-        uploadPreset: UPLOAD_PRESET,
-        sources: ['local', 'url', 'camera'],
-        multiple: false,
-      },
-      (error: any, result: any) => {
-        if (!error && result && result.event === "success") {
-          setFormData(prev => ({ ...prev, imageUrl: result.info.secure_url }));
-          toast.success('Image uploaded successfully');
-        }
+  const uploadToCloudinary = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET || '');
+    
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.secure_url) {
+        return data.secure_url;
       }
-    ).open();
+      throw new Error('Upload failed');
+    } catch (error) {
+      console.error('Cloudinary upload error:', error);
+      throw error;
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const uploadPromises = Array.from(files).map(file => uploadToCloudinary(file));
+    
+    toast.promise(
+      Promise.all(uploadPromises).then(urls => {
+        setFormData(prev => ({
+          ...prev,
+          imageUrls: [...prev.imageUrls, ...urls]
+        }));
+      }),
+      {
+        loading: 'Uploading images...',
+        success: 'Images uploaded successfully',
+        error: 'Failed to upload images',
+      }
+    );
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.imageUrl) {
-      toast.error('Please upload an image');
+    if (formData.imageUrls.length === 0) {
+      toast.error('Please upload at least one image');
       return;
     }
     setIsSubmitting(true);
@@ -108,7 +144,8 @@ export const AdminProducts = () => {
         category: formData.category,
         stock: Number(formData.stock),
         featured: formData.featured,
-        imageUrl: formData.imageUrl,
+        imageUrl: formData.imageUrls[0], // Primary image
+        imageUrls: formData.imageUrls,
       };
 
       if (editingProduct) {
@@ -143,80 +180,80 @@ export const AdminProducts = () => {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Products</h1>
-        <Button onClick={() => handleOpenSheet()} className="bg-indigo-600 hover:bg-indigo-700">
+    <div className="p-12 bg-[#050505] min-h-screen">
+      <div className="flex justify-between items-center mb-12">
+        <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Products</h1>
+        <Button onClick={() => handleOpenSheet()} className="bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom px-8 h-12 font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-white/5">
           <Plus className="w-4 h-4 mr-2" /> Add Product
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+      <div className="glass rounded-[40px] border-white/10 overflow-hidden">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+          <TableHeader className="bg-white/5">
+            <TableRow className="border-white/5 hover:bg-transparent">
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16 px-8">Product</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16">Category</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16">Price</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16">Stock</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16">Status</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16 text-right px-8">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">Loading products...</TableCell>
+              <TableRow className="border-white/5">
+                <TableCell colSpan={6} className="text-center py-20 text-slate-500 font-bold uppercase tracking-widest text-xs">Loading products...</TableCell>
               </TableRow>
             ) : products.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-500">No products found</TableCell>
+              <TableRow className="border-white/5">
+                <TableCell colSpan={6} className="text-center py-20 text-slate-500 font-bold uppercase tracking-widest text-xs">No products found</TableCell>
               </TableRow>
             ) : (
               products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <img src={product.imageUrl} alt={product.name} className="w-12 h-12 rounded object-cover bg-slate-100" />
-                      <span className="font-medium text-slate-900 line-clamp-1">{product.name}</span>
+                <TableRow key={product.id} className="border-white/5 hover:bg-white/[0.02] transition-colors">
+                  <TableCell className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                      <img src={product.imageUrl} alt={product.name} className="w-14 h-14 rounded-2xl object-cover glass border border-white/5" />
+                      <span className="font-black text-white uppercase tracking-tight line-clamp-1">{product.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{product.category}</TableCell>
+                  <TableCell className="text-slate-400 font-bold text-xs uppercase tracking-widest">{product.category}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium">{formatPrice(product.discountPrice || product.price)}</span>
-                      {product.discountPrice && <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>}
+                      <span className="font-black text-white">{formatPrice(product.discountPrice || product.price)}</span>
+                      {product.discountPrice && <span className="text-[10px] text-slate-600 line-through font-bold">{formatPrice(product.price)}</span>}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={product.stock > 10 ? 'default' : 'destructive'} className={product.stock > 10 ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}>
-                      {product.stock}
+                    <Badge variant={product.stock > 10 ? 'default' : 'destructive'} className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${product.stock > 10 ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                      {product.stock} Units
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {product.featured ? <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-100">Featured</Badge> : <span className="text-slate-400 text-sm">-</span>}
+                    {product.featured ? <Badge className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">Featured</Badge> : <span className="text-slate-700 font-black text-[10px] uppercase tracking-widest ml-4">—</span>}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right px-8">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenSheet(product)}>
-                        <Edit className="w-4 h-4 text-slate-500" />
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenSheet(product)} className="rounded-full hover:bg-white/10">
+                        <Edit className="w-4 h-4 text-slate-400" />
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="w-4 h-4 text-red-500" />
+                          <Button variant="ghost" size="icon" className="rounded-full hover:bg-red-500/10">
+                            <Trash2 className="w-4 h-4 text-red-400" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="glass border-white/10 rounded-[40px] p-10">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Product</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogTitle className="text-2xl font-black text-white uppercase tracking-tighter">Delete Product</AlertDialogTitle>
+                            <AlertDialogDescription className="text-slate-400 font-medium">
                               Are you sure you want to delete "{product.name}"? This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(product.id)} className="bg-red-600 hover:bg-red-700">
+                          <AlertDialogFooter className="mt-8">
+                            <AlertDialogCancel className="rounded-full-custom glass border-white/10 text-white font-black uppercase tracking-widest text-xs h-12 px-8">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(product.id)} className="bg-red-600 hover:bg-red-700 rounded-full-custom font-black uppercase tracking-widest text-xs h-12 px-8">
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -233,84 +270,101 @@ export const AdminProducts = () => {
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent 
-          className="w-[400px] sm:w-[540px] overflow-y-auto"
+          className="w-[400px] sm:w-[540px] overflow-y-auto glass border-white/10 p-10"
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
         >
-          <SheetHeader className="mb-6">
-            <SheetTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</SheetTitle>
+          <SheetHeader className="mb-10">
+            <SheetTitle className="text-3xl font-black text-white uppercase tracking-tighter">{editingProduct ? 'Edit Product' : 'Add New Product'}</SheetTitle>
           </SheetHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label>Product Image</Label>
-              <div className="flex items-center gap-4">
-                {formData.imageUrl ? (
-                  <img src={formData.imageUrl} alt="Preview" className="w-20 h-20 rounded object-cover border" />
-                ) : (
-                  <div className="w-20 h-20 rounded border-2 border-dashed flex items-center justify-center text-slate-400 bg-slate-50">
-                    <ImageIcon className="w-8 h-8" />
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-4">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Product Images</Label>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                {formData.imageUrls.map((url, index) => (
+                  <div key={index} className="relative aspect-square group">
+                    <img src={url} alt={`Product ${index}`} className="w-full h-full rounded-2xl object-cover glass border border-white/5" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                    {index === 0 && (
+                      <span className="absolute bottom-2 left-2 bg-indigo-600 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full">Primary</span>
+                    )}
                   </div>
-                )}
-                <Button type="button" variant="outline" onClick={handleImageUpload}>
-                  {formData.imageUrl ? 'Change Image' : 'Upload Image'}
-                </Button>
+                ))}
+                <label className="aspect-square rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-slate-500 glass cursor-pointer hover:bg-white/5 transition-colors">
+                  <ImageIcon className="w-8 h-8 mb-2" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Add Image</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileChange}
+                  />
+                </label>
               </div>
+              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest ml-4">First image will be used as the primary thumbnail.</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Product Name</Label>
-              <Input id="name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+              <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Product Name</Label>
+              <Input id="name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Description</Label>
               <textarea 
                 id="description" 
-                className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                className="flex min-h-[120px] w-full rounded-[32px] border border-white/5 glass px-6 py-4 text-sm text-white placeholder:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
                 value={formData.description} 
                 onChange={e => setFormData({...formData, description: e.target.value})} 
                 required 
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="price">Original Price (₹)</Label>
-                <Input id="price" type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required />
+                <Label htmlFor="price" className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Original Price (₹)</Label>
+                <Input id="price" type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="discountPrice">Discount Price (₹)</Label>
-                <Input id="discountPrice" type="number" min="0" value={formData.discountPrice} onChange={e => setFormData({...formData, discountPrice: e.target.value})} />
+                <Label htmlFor="discountPrice" className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Discount Price (₹)</Label>
+                <Input id="discountPrice" type="number" min="0" value={formData.discountPrice} onChange={e => setFormData({...formData, discountPrice: e.target.value})} className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Category</Label>
                 <Select value={formData.category} onValueChange={v => setFormData({...formData, category: v})} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="glass rounded-full-custom border-white/5 text-white h-14 px-6">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="glass border-white/10 text-white rounded-2xl">
                     {CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="stock">Stock Quantity</Label>
-                <Input id="stock" type="number" min="0" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} required />
+                <Label htmlFor="stock" className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Stock Quantity</Label>
+                <Input id="stock" type="number" min="0" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} required className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
               </div>
             </div>
 
-            <div className="flex items-center justify-between border p-4 rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="featured">Featured Product</Label>
-                <p className="text-sm text-slate-500">Show on homepage</p>
+            <div className="flex items-center justify-between glass p-6 rounded-[32px] border-white/5">
+              <div className="space-y-1">
+                <Label htmlFor="featured" className="text-sm font-black text-white uppercase tracking-widest">Featured Product</Label>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Show on homepage</p>
               </div>
               <Switch id="featured" checked={formData.featured} onCheckedChange={v => setFormData({...formData, featured: v})} />
             </div>
 
-            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
+            <Button type="submit" className="w-full h-16 bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom font-black uppercase tracking-widest text-sm transition-all shadow-xl shadow-white/5" disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : (editingProduct ? 'Update Product' : 'Add Product')}
             </Button>
           </form>

@@ -85,60 +85,66 @@ export const Checkout = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <h1 className="text-3xl font-bold text-slate-900 mb-8">Checkout</h1>
+    <div className="container mx-auto px-4 py-12">
+      <h1 className="text-4xl font-black text-white mb-12 tracking-tighter uppercase">Checkout</h1>
 
-      <div className="flex flex-col lg:flex-row gap-12">
+      <div className="flex flex-col lg:flex-row gap-16">
         <div className="flex-1">
           {/* Progress Indicator */}
-          <div className="flex items-center mb-8">
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'} font-bold`}>1</div>
-            <div className={`flex-1 h-1 mx-2 ${step >= 2 ? 'bg-indigo-600' : 'bg-slate-200'}`}></div>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 2 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'} font-bold`}>2</div>
-            <div className={`flex-1 h-1 mx-2 ${step >= 3 ? 'bg-indigo-600' : 'bg-slate-200'}`}></div>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 3 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'} font-bold`}>3</div>
+          <div className="flex items-center justify-between mb-12 glass p-6 rounded-full-custom border-white/5">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm ${step >= s ? 'bg-indigo-600 text-white' : 'glass text-slate-500'}`}>
+                  {s}
+                </div>
+                <span className={`text-[10px] font-black uppercase tracking-widest hidden sm:block ${step >= s ? 'text-white' : 'text-slate-600'}`}>
+                  {s === 1 ? 'Shipping' : s === 2 ? 'Payment' : 'Review'}
+                </span>
+                {s < 3 && <div className={`w-8 h-[2px] ${step > s ? 'bg-indigo-600' : 'bg-white/5'}`} />}
+              </div>
+            ))}
           </div>
 
           {/* Step 1: Shipping */}
           {step === 1 && (
-            <div className="bg-white p-6 rounded-xl border">
-              <h2 className="text-xl font-bold mb-6">Shipping Address</h2>
-              <form onSubmit={handleSubmit(onShippingSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="glass p-10 rounded-[40px] border-white/10">
+              <h2 className="text-2xl font-black text-white mb-8 uppercase tracking-tighter">Shipping Address</h2>
+              <form onSubmit={handleSubmit(onShippingSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input id="fullName" {...register('fullName')} />
-                    {errors.fullName && <p className="text-sm text-red-500">{errors.fullName.message}</p>}
+                    <Label htmlFor="fullName" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Full Name</Label>
+                    <Input id="fullName" {...register('fullName')} className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
+                    {errors.fullName && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.fullName.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" {...register('phone')} />
-                    {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
+                    <Label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Phone Number</Label>
+                    <Input id="phone" {...register('phone')} className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
+                    {errors.phone && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.phone.message}</p>}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input id="address" {...register('address')} />
-                  {errors.address && <p className="text-sm text-red-500">{errors.address.message}</p>}
+                  <Label htmlFor="address" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Address</Label>
+                  <Input id="address" {...register('address')} className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
+                  {errors.address && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.address.message}</p>}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input id="city" {...register('city')} />
-                    {errors.city && <p className="text-sm text-red-500">{errors.city.message}</p>}
+                    <Label htmlFor="city" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">City</Label>
+                    <Input id="city" {...register('city')} className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
+                    {errors.city && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.city.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input id="state" {...register('state')} />
-                    {errors.state && <p className="text-sm text-red-500">{errors.state.message}</p>}
+                    <Label htmlFor="state" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">State</Label>
+                    <Input id="state" {...register('state')} className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
+                    {errors.state && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.state.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pincode">Pincode</Label>
-                    <Input id="pincode" {...register('pincode')} />
-                    {errors.pincode && <p className="text-sm text-red-500">{errors.pincode.message}</p>}
+                    <Label htmlFor="pincode" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Pincode</Label>
+                    <Input id="pincode" {...register('pincode')} className="glass rounded-full-custom border-white/5 text-white h-14 px-6" />
+                    {errors.pincode && <p className="text-red-500 text-[10px] font-bold ml-4">{errors.pincode.message}</p>}
                   </div>
                 </div>
-                <Button type="submit" className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700">
+                <Button type="submit" className="w-full h-16 bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom font-black uppercase tracking-widest text-sm transition-all shadow-xl shadow-white/5">
                   Continue to Payment
                 </Button>
               </form>
@@ -147,65 +153,56 @@ export const Checkout = () => {
 
           {/* Step 2: Payment */}
           {step === 2 && (
-            <div className="bg-white p-6 rounded-xl border">
-              <h2 className="text-xl font-bold mb-6">Payment Method</h2>
+            <div className="glass p-10 rounded-[40px] border-white/10">
+              <h2 className="text-2xl font-black text-white mb-8 uppercase tracking-tighter">Payment Method</h2>
               <RadioGroup defaultValue="cod" className="space-y-4">
-                <div className="flex items-center space-x-3 border p-4 rounded-lg bg-indigo-50 border-indigo-200">
-                  <RadioGroupItem value="cod" id="cod" />
-                  <Label htmlFor="cod" className="font-medium cursor-pointer">Cash on Delivery (COD)</Label>
+                <div className="flex items-center space-x-4 glass p-6 rounded-3xl border-white/5 bg-indigo-500/10 border-indigo-500/30">
+                  <RadioGroupItem value="cod" id="cod" className="border-indigo-500 text-indigo-500" />
+                  <Label htmlFor="cod" className="flex-1 cursor-pointer">
+                    <p className="font-black text-white uppercase tracking-widest text-sm">Cash on Delivery</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Pay when your order arrives</p>
+                  </Label>
                 </div>
-                <div className="flex items-center space-x-3 border p-4 rounded-lg opacity-50">
+                <div className="flex items-center space-x-4 glass p-6 rounded-3xl border-white/5 opacity-50">
                   <RadioGroupItem value="card" id="card" disabled />
-                  <div className="flex flex-col">
-                    <Label htmlFor="card" className="font-medium">Credit / Debit Card</Label>
-                    <span className="text-xs text-slate-500">Coming soon</span>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 border p-4 rounded-lg opacity-50">
-                  <RadioGroupItem value="upi" id="upi" disabled />
-                  <div className="flex flex-col">
-                    <Label htmlFor="upi" className="font-medium">UPI</Label>
-                    <span className="text-xs text-slate-500">Coming soon</span>
-                  </div>
+                  <Label htmlFor="card" className="flex-1">
+                    <p className="font-black text-white uppercase tracking-widest text-sm">Credit / Debit Card</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Coming soon</p>
+                  </Label>
                 </div>
               </RadioGroup>
-              <div className="flex gap-4 mt-8">
-                <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Back</Button>
-                <Button onClick={() => setStep(3)} className="flex-1 bg-indigo-600 hover:bg-indigo-700">Review Order</Button>
+              <div className="flex gap-4 mt-10">
+                <Button variant="outline" onClick={() => setStep(1)} className="flex-1 h-16 glass rounded-full-custom border-white/10 text-white font-black uppercase tracking-widest">Back</Button>
+                <Button onClick={() => setStep(3)} className="flex-1 h-16 bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom font-black uppercase tracking-widest">Review Order</Button>
               </div>
             </div>
           )}
 
           {/* Step 3: Review */}
           {step === 3 && (
-            <div className="bg-white p-6 rounded-xl border">
-              <h2 className="text-xl font-bold mb-6">Review Your Order</h2>
+            <div className="glass p-10 rounded-[40px] border-white/10">
+              <h2 className="text-2xl font-black text-white mb-8 uppercase tracking-tighter">Review Your Order</h2>
               
-              <div className="mb-6">
-                <h3 className="font-semibold text-slate-900 mb-2">Shipping Address</h3>
-                <div className="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg">
-                  <p className="font-medium text-slate-900">{shippingData?.fullName}</p>
-                  <p>{shippingData?.address}</p>
-                  <p>{shippingData?.city}, {shippingData?.state} - {shippingData?.pincode}</p>
-                  <p>Phone: {shippingData?.phone}</p>
-                </div>
+              <div className="mb-10 glass p-8 rounded-3xl border-white/5">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-4">Shipping To</h3>
+                <p className="text-white font-bold">{shippingData?.fullName}</p>
+                <p className="text-slate-400 text-sm mt-1">{shippingData?.address}, {shippingData?.city}, {shippingData?.state} - {shippingData?.pincode}</p>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">Phone: {shippingData?.phone}</p>
               </div>
 
-              <div className="mb-6">
-                <h3 className="font-semibold text-slate-900 mb-2">Payment Method</h3>
-                <div className="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg">
-                  <p>Cash on Delivery (COD)</p>
-                </div>
+              <div className="mb-10 glass p-8 rounded-3xl border-white/5">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-4">Payment Method</h3>
+                <p className="text-white font-bold uppercase tracking-widest text-sm">Cash on Delivery</p>
               </div>
 
-              <div className="flex gap-4 mt-8">
-                <Button variant="outline" onClick={() => setStep(2)} className="flex-1" disabled={isSubmitting}>Back</Button>
+              <div className="flex gap-4">
+                <Button variant="outline" onClick={() => setStep(2)} className="flex-1 h-16 glass rounded-full-custom border-white/10 text-white font-black uppercase tracking-widest">Back</Button>
                 <Button 
                   onClick={handlePlaceOrder} 
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700"
                   disabled={isSubmitting}
+                  className="flex-1 h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full-custom font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20"
                 >
-                  {isSubmitting ? 'Placing Order...' : 'Place Order'}
+                  {isSubmitting ? 'Processing...' : 'Place Order'}
                 </Button>
               </div>
             </div>
@@ -214,43 +211,42 @@ export const Checkout = () => {
 
         {/* Order Summary Sidebar */}
         <div className="w-full lg:w-96 shrink-0">
-          <div className="bg-slate-50 rounded-xl p-6 border sticky top-24">
-            <h2 className="text-lg font-bold text-slate-900 mb-6">Order Summary</h2>
+          <div className="glass rounded-[40px] p-10 border-white/10 sticky top-24">
+            <h2 className="text-xl font-black text-white mb-8 uppercase tracking-tighter">Order Summary</h2>
             
-            <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2">
-              {cart.map(item => (
-                <div key={item.productId} className="flex gap-3">
-                  <div className="w-16 h-16 bg-white rounded border overflow-hidden shrink-0">
-                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+            <div className="space-y-6 mb-8 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+              {cart.map((item) => (
+                <div key={item.productId} className="flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 glass rounded-2xl overflow-hidden border border-white/5">
+                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-white uppercase tracking-tight line-clamp-1">{item.name}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Qty: {item.quantity}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 text-sm">
-                    <p className="font-medium text-slate-900 line-clamp-1">{item.name}</p>
-                    <p className="text-slate-500">Qty: {item.quantity}</p>
-                    <p className="font-medium text-indigo-600">{formatPrice(item.price * item.quantity)}</p>
-                  </div>
+                  <span className="text-xs font-black text-white">{formatPrice(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
 
-            <div className="space-y-3 pt-4 border-t text-sm">
-              <div className="flex justify-between text-slate-600">
+            <div className="space-y-4 pt-8 border-t border-white/5">
+              <div className="flex justify-between text-slate-400 font-bold uppercase tracking-widest text-[10px]">
                 <span>Subtotal</span>
-                <span className="font-medium text-slate-900">{formatPrice(subtotal)}</span>
+                <span className="text-white">{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-slate-400 font-bold uppercase tracking-widest text-[10px]">
                 <span>Shipping</span>
-                <span className="font-medium text-slate-900">{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+                <span className="text-white">{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Estimated Tax (18%)</span>
-                <span className="font-medium text-slate-900">{formatPrice(taxes)}</span>
+              <div className="flex justify-between text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                <span>Tax</span>
+                <span className="text-white">{formatPrice(taxes)}</span>
               </div>
-              
-              <div className="pt-3 border-t">
-                <div className="flex justify-between items-center">
-                  <span className="text-base font-bold text-slate-900">Total</span>
-                  <span className="text-xl font-bold text-indigo-600">{formatPrice(total)}</span>
-                </div>
+              <div className="flex justify-between items-center pt-4">
+                <span className="text-lg font-black text-white uppercase tracking-tighter">Total</span>
+                <span className="text-2xl font-black text-indigo-400 tracking-tighter">{formatPrice(total)}</span>
               </div>
             </div>
           </div>

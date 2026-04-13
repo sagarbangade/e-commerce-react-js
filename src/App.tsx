@@ -23,7 +23,7 @@ import { AdminProducts } from './pages/admin/AdminProducts';
 import { AdminOrders } from './pages/admin/AdminOrders';
 
 const MainLayout = () => (
-  <div className="min-h-screen flex flex-col bg-white">
+  <div className="min-h-screen flex flex-col bg-[#050505]">
     <Navbar />
     <main className="flex-1">
       <Outlet />
@@ -33,7 +33,7 @@ const MainLayout = () => (
 );
 
 const AdminLayout = () => (
-  <div className="min-h-screen flex bg-slate-50">
+  <div className="min-h-screen flex bg-[#050505]">
     <AdminSidebar />
     <main className="flex-1 overflow-y-auto">
       <Outlet />

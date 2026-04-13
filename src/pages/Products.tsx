@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Clock } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '../components/ui/sheet';
 
@@ -25,6 +25,7 @@ export const Products = () => {
   const [search, setSearch] = useState('');
   const [priceRange, setPriceRange] = useState([0, 50000]);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [fastDeliveryOnly, setFastDeliveryOnly] = useState(searchParams.get('delivery') === 'fast');
   const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
@@ -32,6 +33,13 @@ export const Products = () => {
       setCategory(initialCategory);
     }
   }, [initialCategory]);
+
+  useEffect(() => {
+    const deliveryParam = searchParams.get('delivery');
+    if (deliveryParam === 'fast' && !fastDeliveryOnly) {
+      setFastDeliveryOnly(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let result = [...products];
@@ -57,6 +65,11 @@ export const Products = () => {
       result = result.filter(p => p.stock > 0);
     }
 
+    // Fast Delivery filter (Mocking: products with stock > 50 are eligible for fast delivery)
+    if (fastDeliveryOnly) {
+      result = result.filter(p => p.stock > 50);
+    }
+
     // Sorting
     switch (sortBy) {
       case 'price-asc':
@@ -75,88 +88,111 @@ export const Products = () => {
     }
 
     setFilteredProducts(result);
-  }, [products, category, search, priceRange, inStockOnly, sortBy]);
+  }, [products, category, search, priceRange, inStockOnly, fastDeliveryOnly, sortBy]);
 
   const FilterContent = () => (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div>
-        <h3 className="font-semibold mb-4">Categories</h3>
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-6">Categories</h3>
         <div className="space-y-2">
           {CATEGORIES.map(cat => (
-            <div key={cat} className="flex items-center">
-              <button
-                onClick={() => {
-                  setCategory(cat);
-                  if (cat === 'All') {
-                    searchParams.delete('category');
-                  } else {
-                    searchParams.set('category', cat);
-                  }
-                  setSearchParams(searchParams);
-                }}
-                className={`text-sm ${category === cat ? 'font-bold text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}`}
-              >
-                {cat}
-              </button>
-            </div>
+            <button
+              key={cat}
+              onClick={() => {
+                setCategory(cat);
+                if (cat === 'All') {
+                  searchParams.delete('category');
+                } else {
+                  searchParams.set('category', cat);
+                }
+                setSearchParams(searchParams);
+              }}
+              className={`block w-full text-left px-4 py-2.5 rounded-full text-sm font-bold uppercase tracking-tight transition-all ${category === cat ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+            >
+              {cat}
+            </button>
           ))}
         </div>
       </div>
 
       <div>
-        <h3 className="font-semibold mb-4">Price Range (₹)</h3>
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-6">Price Range</h3>
         <Slider
           defaultValue={[0, 50000]}
           max={50000}
           step={100}
           value={priceRange}
           onValueChange={setPriceRange}
-          className="mb-4"
+          className="mb-6"
         />
-        <div className="flex justify-between text-sm text-slate-500">
-          <span>₹{priceRange[0]}</span>
-          <span>₹{priceRange[1]}</span>
+        <div className="flex justify-between text-[10px] font-bold font-mono text-slate-500">
+          <span className="glass px-3 py-1 rounded-full">₹{priceRange[0]}</span>
+          <span className="glass px-3 py-1 rounded-full">₹{priceRange[1]}</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Label htmlFor="in-stock" className="font-semibold">In Stock Only</Label>
-        <Switch
-          id="in-stock"
-          checked={inStockOnly}
-          onCheckedChange={setInStockOnly}
-        />
+      <div className="space-y-6 pt-8 border-t border-white/5">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="in-stock" className="text-sm font-bold uppercase tracking-tight text-white">In Stock Only</Label>
+          <Switch
+            id="in-stock"
+            checked={inStockOnly}
+            onCheckedChange={setInStockOnly}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="fast-delivery" className="text-sm font-bold uppercase tracking-tight flex items-center gap-2 text-white">
+              15 Min Delivery <Clock className="w-3 h-3 text-yellow-400" />
+            </Label>
+            <p className="text-[10px] text-slate-500">Available for select items</p>
+          </div>
+          <Switch
+            id="fast-delivery"
+            checked={fastDeliveryOnly}
+            onCheckedChange={(checked) => {
+              setFastDeliveryOnly(checked);
+              if (checked) {
+                searchParams.set('delivery', 'fast');
+              } else {
+                searchParams.delete('delivery');
+              }
+              setSearchParams(searchParams);
+            }}
+          />
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="container mx-auto px-4 py-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            {category === 'All' ? 'All Products' : category}
+          <span className="text-indigo-600 font-mono text-xs tracking-widest uppercase mb-2 block">Collection</span>
+          <h1 className="text-5xl font-black text-white tracking-tighter uppercase">
+            {category === 'All' ? 'The Archive' : category}
           </h1>
-          <p className="text-slate-500 mt-1">Showing {filteredProducts.length} results</p>
+          <p className="text-slate-500 mt-2 font-medium">Curated selection of {filteredProducts.length} premium pieces</p>
         </div>
 
         <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <Input
-              placeholder="Search products..."
+              placeholder="Search the collection..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-11 h-12 rounded-full-custom border-white/10 glass focus:ring-0 focus:border-indigo-500 transition-all text-white placeholder:text-slate-600"
             />
           </div>
           
           <div className="flex gap-2">
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[180px] h-12 rounded-full-custom border-white/10 glass text-white">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass border-white/10 text-white rounded-2xl">
                 <SelectItem value="newest">Newest Arrivals</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
@@ -166,12 +202,12 @@ export const Products = () => {
 
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="md:hidden">
-                  <SlidersHorizontal className="h-4 w-4" />
+                <Button variant="outline" size="icon" className="md:hidden h-12 w-12 rounded-full border-white/10 glass">
+                  <SlidersHorizontal className="h-4 w-4 text-white" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left">
-                <SheetTitle className="mb-6">Filters</SheetTitle>
+              <SheetContent side="left" className="w-[300px] glass border-white/10">
+                <SheetTitle className="text-2xl font-black uppercase tracking-tighter mb-8 text-white">Filters</SheetTitle>
                 <FilterContent />
               </SheetContent>
             </Sheet>
@@ -179,41 +215,45 @@ export const Products = () => {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-12">
         {/* Desktop Sidebar */}
         <div className="hidden md:block w-64 shrink-0">
-          <FilterContent />
+          <div className="sticky top-24 glass p-8 rounded-[32px] border-white/10">
+            <FilterContent />
+          </div>
         </div>
 
         {/* Product Grid */}
         <div className="flex-1">
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-[400px] bg-slate-100 animate-pulse rounded-xl" />
+                <div key={i} className="aspect-[3/4] bg-white/5 animate-pulse rounded-[32px]" />
               ))}
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-20">
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">No products found</h3>
-              <p className="text-slate-500">Try adjusting your filters or search query.</p>
+            <div className="text-center py-32 border-2 border-dashed border-white/5 rounded-[40px] glass">
+              <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">No matches found</h3>
+              <p className="text-slate-500 mb-8 font-bold uppercase tracking-widest text-xs">Refine your search or clear filters to explore more.</p>
               <Button 
                 variant="outline" 
-                className="mt-6"
+                className="rounded-full-custom border-white/10 glass text-white hover:bg-white/10 px-8 h-12 font-black uppercase tracking-widest text-[10px] transition-all"
                 onClick={() => {
                   setCategory('All');
                   setSearch('');
                   setPriceRange([0, 50000]);
                   setInStockOnly(false);
+                  setFastDeliveryOnly(false);
                   searchParams.delete('category');
+                  searchParams.delete('delivery');
                   setSearchParams(searchParams);
                 }}
               >
-                Clear all filters
+                Reset All Filters
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

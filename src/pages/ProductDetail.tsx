@@ -18,6 +18,7 @@ export const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState('');
   
   const addToCart = useStore((state) => state.addToCart);
 
@@ -28,7 +29,10 @@ export const ProductDetail = () => {
         const docRef = doc(db, 'products', id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
+          const data = docSnap.data() as Product;
+          const images = data.imageUrls || [data.imageUrl].filter(Boolean);
+          setProduct({ ...data, id: docSnap.id, imageUrls: images } as Product);
+          setActiveImage(images[0] || '');
         } else {
           toast.error('Product not found');
           navigate('/products');
@@ -49,7 +53,7 @@ export const ProductDetail = () => {
       productId: product.id,
       name: product.name,
       price: product.discountPrice || product.price,
-      imageUrl: product.imageUrl,
+      imageUrl: activeImage || product.imageUrl,
       quantity,
     });
     toast.success('Added to cart');
@@ -66,81 +70,97 @@ export const ProductDetail = () => {
 
   if (!product) return null;
 
+  const images = product.imageUrls || [product.imageUrl].filter(Boolean);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+    <div className="container mx-auto px-4 py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mb-24">
         {/* Image Gallery */}
-        <div className="space-y-4">
-          <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100 relative">
+        <div className="space-y-6">
+          <div className="aspect-square rounded-[40px] overflow-hidden glass relative border border-white/10">
             <img 
-              src={product.imageUrl} 
+              src={activeImage} 
               alt={product.name} 
               className="w-full h-full object-cover"
             />
             {product.discountPrice && (
-              <Badge className="absolute top-4 left-4 bg-red-500 text-sm px-3 py-1">
+              <Badge className="absolute top-6 left-6 bg-red-600 text-white text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest">
                 {calculateDiscountPercentage(product.price, product.discountPrice)}% OFF
               </Badge>
             )}
           </div>
+          
+          {images.length > 1 && (
+            <div className="grid grid-cols-5 gap-4">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(img)}
+                  className={`aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 ${activeImage === img ? 'border-indigo-500 scale-95' : 'border-transparent hover:border-white/20'}`}
+                >
+                  <img src={img} alt={`${product.name} ${idx}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
-        <div className="flex flex-col">
-          <div className="mb-6">
-            <p className="text-indigo-600 font-medium mb-2">{product.category}</p>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">{product.name}</h1>
-            <div className="flex items-center gap-4">
+        <div className="flex flex-col py-4">
+          <div className="mb-8">
+            <p className="text-indigo-400 font-black uppercase tracking-[0.2em] text-xs mb-3">{product.category}</p>
+            <h1 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tighter uppercase">{product.name}</h1>
+            <div className="flex items-center gap-6">
               <StarRating rating={product.rating} />
-              <span className="text-sm text-slate-500">{product.reviewCount} Reviews</span>
+              <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">{product.reviewCount} Reviews</span>
             </div>
           </div>
 
-          <div className="mb-8">
-            <div className="flex items-end gap-3 mb-2">
-              <span className="text-4xl font-bold text-slate-900">
+          <div className="mb-10 glass p-8 rounded-[32px] border-white/10">
+            <div className="flex items-end gap-4 mb-2">
+              <span className="text-5xl font-black text-white tracking-tighter">
                 {formatPrice(product.discountPrice || product.price)}
               </span>
               {product.discountPrice && (
-                <span className="text-xl text-slate-400 line-through mb-1">
+                <span className="text-2xl text-slate-500 line-through mb-1 font-bold">
                   {formatPrice(product.price)}
                 </span>
               )}
             </div>
-            <p className="text-sm text-slate-500">Inclusive of all taxes</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Inclusive of all taxes</p>
           </div>
 
-          <div className="mb-8">
-            <p className="text-slate-600 leading-relaxed">{product.description}</p>
+          <div className="mb-10">
+            <p className="text-slate-400 leading-relaxed text-lg font-light">{product.description}</p>
           </div>
 
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <span className="font-medium text-slate-900">Quantity</span>
-              <div className="flex items-center border rounded-md">
+          <div className="mb-10">
+            <div className="flex items-center gap-6 mb-4">
+              <span className="font-black text-white uppercase tracking-widest text-xs">Quantity</span>
+              <div className="flex items-center glass rounded-full p-1 border-white/10">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-2 hover:bg-slate-50 text-slate-600"
+                  className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 text-white transition-colors"
                   disabled={quantity <= 1}
                 >
-                  <Minus size={16} />
+                  <Minus size={18} />
                 </button>
-                <span className="w-12 text-center font-medium">{quantity}</span>
+                <span className="w-12 text-center font-black text-white">{quantity}</span>
                 <button 
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  className="p-2 hover:bg-slate-50 text-slate-600"
+                  className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 text-white transition-colors"
                   disabled={quantity >= product.stock}
                 >
-                  <Plus size={16} />
+                  <Plus size={18} />
                 </button>
               </div>
-              <span className="text-sm text-slate-500">
+              <span className="text-xs font-bold uppercase tracking-widest">
                 {product.stock > 0 ? (
-                  <span className={product.stock < 10 ? "text-orange-500 font-medium" : "text-green-600 font-medium"}>
-                    {product.stock < 10 ? `Only ${product.stock} left in stock` : 'In Stock'}
+                  <span className={product.stock < 10 ? "text-orange-400" : "text-green-400"}>
+                    {product.stock < 10 ? `Only ${product.stock} left` : 'In Stock'}
                   </span>
                 ) : (
-                  <span className="text-red-500 font-medium">Out of Stock</span>
+                  <span className="text-red-500">Out of Stock</span>
                 )}
               </span>
             </div>
@@ -150,7 +170,7 @@ export const ProductDetail = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="flex-1 h-14 text-base"
+              className="flex-1 h-16 text-sm font-black uppercase tracking-widest rounded-full-custom border-white/10 glass hover:bg-white/10"
               onClick={handleAddToCart}
               disabled={product.stock === 0}
             >
@@ -158,7 +178,7 @@ export const ProductDetail = () => {
             </Button>
             <Button 
               size="lg" 
-              className="flex-1 h-14 text-base bg-indigo-600 hover:bg-indigo-700"
+              className="flex-1 h-16 text-sm font-black uppercase tracking-widest rounded-full-custom bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/20"
               onClick={handleBuyNow}
               disabled={product.stock === 0}
             >
@@ -169,31 +189,31 @@ export const ProductDetail = () => {
       </div>
 
       {/* Tabs */}
-      <div className="mt-16">
+      <div className="mt-24 glass p-10 rounded-[40px] border-white/10">
         <Tabs defaultValue="description" className="w-full">
-          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-            <TabsTrigger value="description" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 rounded-none px-8 py-4 text-base">Description</TabsTrigger>
-            <TabsTrigger value="specifications" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 rounded-none px-8 py-4 text-base">Specifications</TabsTrigger>
-            <TabsTrigger value="reviews" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-600 rounded-none px-8 py-4 text-base">Reviews ({product.reviewCount})</TabsTrigger>
+          <TabsList className="w-full justify-start border-b border-white/5 rounded-none h-auto p-0 bg-transparent mb-8">
+            <TabsTrigger value="description" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 rounded-none px-10 py-6 text-sm font-black uppercase tracking-widest text-slate-500 data-[state=active]:text-white">Description</TabsTrigger>
+            <TabsTrigger value="specifications" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 rounded-none px-10 py-6 text-sm font-black uppercase tracking-widest text-slate-500 data-[state=active]:text-white">Specifications</TabsTrigger>
+            <TabsTrigger value="reviews" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 rounded-none px-10 py-6 text-sm font-black uppercase tracking-widest text-slate-500 data-[state=active]:text-white">Reviews ({product.reviewCount})</TabsTrigger>
           </TabsList>
-          <TabsContent value="description" className="py-8">
-            <p className="text-slate-600 leading-relaxed max-w-3xl">{product.description}</p>
+          <TabsContent value="description" className="py-4">
+            <p className="text-slate-400 leading-relaxed max-w-3xl font-light text-lg">{product.description}</p>
           </TabsContent>
-          <TabsContent value="specifications" className="py-8">
-            <div className="max-w-3xl">
-              <div className="grid grid-cols-3 py-3 border-b">
-                <span className="font-medium text-slate-900">Category</span>
-                <span className="col-span-2 text-slate-600">{product.category}</span>
+          <TabsContent value="specifications" className="py-4">
+            <div className="max-w-3xl glass p-8 rounded-3xl border-white/5">
+              <div className="grid grid-cols-3 py-4 border-b border-white/5">
+                <span className="font-black text-indigo-400 uppercase tracking-widest text-xs">Category</span>
+                <span className="col-span-2 text-white font-medium">{product.category}</span>
               </div>
-              <div className="grid grid-cols-3 py-3 border-b">
-                <span className="font-medium text-slate-900">Availability</span>
-                <span className="col-span-2 text-slate-600">{product.stock > 0 ? 'In Stock' : 'Out of Stock'}</span>
+              <div className="grid grid-cols-3 py-4">
+                <span className="font-black text-indigo-400 uppercase tracking-widest text-xs">Availability</span>
+                <span className="col-span-2 text-white font-medium">{product.stock > 0 ? 'In Stock' : 'Out of Stock'}</span>
               </div>
             </div>
           </TabsContent>
-          <TabsContent value="reviews" className="py-8">
-            <div className="max-w-3xl">
-              <p className="text-slate-500 italic">Reviews feature coming soon.</p>
+          <TabsContent value="reviews" className="py-4">
+            <div className="max-w-3xl glass p-12 rounded-3xl border-white/5 text-center">
+              <p className="text-slate-500 font-bold uppercase tracking-[0.2em]">Reviews feature coming soon.</p>
             </div>
           </TabsContent>
         </Tabs>

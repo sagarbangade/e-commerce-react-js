@@ -82,117 +82,121 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <Button onClick={handleSeed} disabled={isSeeding} className="bg-indigo-600 hover:bg-indigo-700">
+    <div className="p-12 bg-[#050505] min-h-screen">
+      <div className="flex justify-between items-center mb-12">
+        <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Dashboard</h1>
+        <Button onClick={handleSeed} disabled={isSeeding} className="bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom px-8 h-12 font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-white/5">
           {isSeeding ? 'Seeding...' : 'Seed Database'}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <Card className="glass border-white/5 rounded-[32px] overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-slate-400" />
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-indigo-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{formatPrice(stats.revenue)}</div>
+            <div className="text-2xl font-black text-white tracking-tighter">{formatPrice(stats.revenue)}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass border-white/5 rounded-[32px] overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Orders</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-slate-400" />
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Orders</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-indigo-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{stats.orders}</div>
+            <div className="text-2xl font-black text-white tracking-tighter">{stats.orders}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass border-white/5 rounded-[32px] overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Total Products</CardTitle>
-            <Package className="h-4 w-4 text-slate-400" />
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-indigo-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{stats.products}</div>
+            <div className="text-2xl font-black text-white tracking-tighter">{stats.products}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass border-white/5 rounded-[32px] overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Active Users</CardTitle>
-            <Users className="h-4 w-4 text-slate-400" />
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-500">Active Users</CardTitle>
+            <Users className="h-4 w-4 text-indigo-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{stats.users}</div>
+            <div className="text-2xl font-black text-white tracking-tighter">{stats.users}</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <Card className="lg:col-span-2 glass border-white/5 rounded-[40px] p-8">
+          <CardHeader className="px-0 pt-0">
+            <CardTitle className="text-xl font-black text-white uppercase tracking-tighter">Revenue Overview</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[350px] px-0">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis tickFormatter={(value) => `₹${value/1000}k`} />
-                  <Tooltip formatter={(value: number) => formatPrice(value)} />
-                  <Bar dataKey="revenue" fill="#4F46E5" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '16px', color: '#fff' }}
+                    itemStyle={{ color: '#818cf8', fontWeight: 'bold' }}
+                    formatter={(value: number) => formatPrice(value)} 
+                  />
+                  <Bar dataKey="revenue" fill="#6366f1" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400">No data available</div>
+              <div className="h-full flex items-center justify-center text-slate-600 font-bold uppercase tracking-widest text-xs">No data available</div>
             )}
           </CardContent>
         </Card>
 
-        <div className="space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Orders</CardTitle>
+        <div className="space-y-12">
+          <Card className="glass border-white/5 rounded-[40px] p-8">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle className="text-xl font-black text-white uppercase tracking-tighter">Recent Orders</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-0">
+              <div className="space-y-6">
                 {recentOrders.map(order => (
-                  <div key={order.id} className="flex justify-between items-center border-b pb-4 last:border-0 last:pb-0">
+                  <div key={order.id} className="flex justify-between items-center border-b border-white/5 pb-6 last:border-0 last:pb-0">
                     <div>
-                      <p className="font-medium text-slate-900">{order.userName}</p>
-                      <p className="text-sm text-slate-500">{order.items.length} items</p>
+                      <p className="font-black text-white uppercase tracking-tight text-sm">{order.userName}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{order.items.length} items</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-indigo-600">{formatPrice(order.totalAmount)}</p>
-                      <p className="text-xs text-slate-500 capitalize">{order.status}</p>
+                      <p className="font-black text-indigo-400">{formatPrice(order.totalAmount)}</p>
+                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">{order.status}</p>
                     </div>
                   </div>
                 ))}
-                {recentOrders.length === 0 && <p className="text-slate-500 text-center">No recent orders</p>}
+                {recentOrders.length === 0 && <p className="text-slate-600 text-center font-bold uppercase tracking-widest text-[10px]">No recent orders</p>}
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-red-600">Low Stock Alerts</CardTitle>
+          <Card className="glass border-white/5 rounded-[40px] p-8">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle className="text-xl font-black text-red-500 uppercase tracking-tighter">Low Stock Alerts</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-0">
+              <div className="space-y-6">
                 {lowStock.map(product => (
-                  <div key={product.id} className="flex justify-between items-center border-b pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-center gap-3">
-                      <img src={product.imageUrl} alt={product.name} className="w-10 h-10 rounded object-cover" />
-                      <p className="font-medium text-slate-900 line-clamp-1">{product.name}</p>
+                  <div key={product.id} className="flex justify-between items-center border-b border-white/5 pb-6 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-4">
+                      <img src={product.imageUrl} alt={product.name} className="w-12 h-12 rounded-2xl object-cover glass border border-white/5" />
+                      <p className="font-black text-white uppercase tracking-tight text-xs line-clamp-1">{product.name}</p>
                     </div>
-                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">
+                    <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
                       {product.stock} left
                     </span>
                   </div>
                 ))}
-                {lowStock.length === 0 && <p className="text-slate-500 text-center">All products well stocked</p>}
+                {lowStock.length === 0 && <p className="text-slate-600 text-center font-bold uppercase tracking-widest text-[10px]">All products well stocked</p>}
               </div>
             </CardContent>
           </Card>

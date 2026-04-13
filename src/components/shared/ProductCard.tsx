@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { Star, Clock } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -29,52 +29,72 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <Link to={`/product/${product.id}`}>
-      <Card className="group overflow-hidden border-none shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white">
-        <div className="relative aspect-square overflow-hidden bg-slate-100">
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-            referrerPolicy="no-referrer"
-          />
+    <Link to={`/product/${product.id}`} className="group block glass-card p-3 rounded-[32px]">
+      <div className="relative overflow-hidden bg-slate-900 aspect-[3/4] rounded-[24px]">
+        <img
+          src={product.imageUrl}
+          alt={product.name}
+          className="object-cover w-full h-full group-hover:scale-110 transition-all duration-1000"
+          referrerPolicy="no-referrer"
+        />
+        
+        {/* Badges */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
           {product.discountPrice && (
-            <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600">
-              {calculateDiscountPercentage(product.price, product.discountPrice)}% OFF
-            </Badge>
+            <span className="bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+              -{calculateDiscountPercentage(product.price, product.discountPrice)}%
+            </span>
+          )}
+          {product.stock > 50 && (
+            <span className="bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg shadow-yellow-400/20">
+              <Clock size={10} /> 15 MIN
+            </span>
           )}
         </div>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-1 mb-2">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm font-medium text-slate-700">{product.rating}</span>
-            <span className="text-sm text-slate-400">({product.reviewCount})</span>
-          </div>
-          <h3 className="font-semibold text-slate-900 line-clamp-1 mb-1 group-hover:text-indigo-600 transition-colors">
-            {product.name}
-          </h3>
-          <p className="text-sm text-slate-500 mb-2">{product.category}</p>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-lg text-slate-900">
-              {formatPrice(product.discountPrice || product.price)}
-            </span>
-            {product.discountPrice && (
-              <span className="text-sm text-slate-400 line-through">
-                {formatPrice(product.price)}
-              </span>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter className="p-4 pt-0">
+ 
+        {/* Quick Add Overlay */}
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center p-8">
           <Button 
             onClick={handleAddToCart} 
-            className="w-full bg-slate-900 hover:bg-indigo-600 text-white transition-colors"
+            className="w-full bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom h-14 font-bold uppercase tracking-widest text-xs transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 shadow-xl"
             disabled={product.stock === 0}
           >
-            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+            {product.stock === 0 ? 'Sold Out' : 'Quick Add +'}
           </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
+
+      <div className="mt-6 px-2 pb-2 space-y-3">
+        <div className="flex justify-between items-start gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-1">{product.category}</p>
+            <h3 className="font-bold text-white leading-tight group-hover:text-indigo-400 transition-colors uppercase tracking-tight text-lg">
+              {product.name}
+            </h3>
+          </div>
+          <div className="text-right">
+            <p className="font-black text-white text-lg">
+              {formatPrice(product.discountPrice || product.price)}
+            </p>
+            {product.discountPrice && (
+              <p className="text-[10px] text-slate-500 line-through font-bold">
+                {formatPrice(product.price)}
+              </p>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1.5">
+          {[...Array(5)].map((_, i) => (
+            <Star 
+              key={i} 
+              size={12} 
+              className={`${i < Math.floor(product.rating) ? 'fill-yellow-400 text-yellow-400' : 'fill-slate-800 text-slate-800'}`} 
+            />
+          ))}
+          <span className="text-[10px] font-bold text-slate-500 ml-1">({product.reviewCount})</span>
+        </div>
+      </div>
     </Link>
   );
 };

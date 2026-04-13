@@ -10,6 +10,7 @@ export interface Product {
   discountPrice: number | null;
   category: string;
   imageUrl: string;
+  imageUrls: string[];
   stock: number;
   rating: number;
   reviewCount: number;

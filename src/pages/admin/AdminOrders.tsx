@@ -40,28 +40,28 @@ export const AdminOrders = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      case 'shipped': return 'bg-purple-100 text-purple-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-slate-100 text-slate-800';
+      case 'pending': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+      case 'processing': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'shipped': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      case 'delivered': return 'bg-green-500/10 text-green-400 border-green-500/20';
+      case 'cancelled': return 'bg-red-500/10 text-red-400 border-red-500/20';
+      default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
     }
   };
 
   const filteredOrders = filter === 'all' ? orders : orders.filter(o => o.status === filter);
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Orders</h1>
-        <div className="flex gap-2">
+    <div className="p-12 bg-[#050505] min-h-screen">
+      <div className="flex justify-between items-center mb-12">
+        <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Orders</h1>
+        <div className="flex gap-3 glass p-2 rounded-full-custom border-white/5">
           {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(status => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
-                filter === status ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-100 border'
+              className={`px-6 py-2 rounded-full-custom text-[10px] font-black uppercase tracking-widest transition-all ${
+                filter === status ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
               }`}
             >
               {status}
@@ -70,47 +70,47 @@ export const AdminOrders = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+      <div className="glass rounded-[40px] border-white/10 overflow-hidden">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+          <TableHeader className="bg-white/5">
+            <TableRow className="border-white/5 hover:bg-transparent">
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16 px-8">Order ID</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16">Customer</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16">Date</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16">Amount</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16">Status</TableHead>
+              <TableHead className="text-indigo-400 font-black uppercase tracking-widest text-[10px] h-16 text-right px-8">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">Loading orders...</TableCell>
+              <TableRow className="border-white/5">
+                <TableCell colSpan={6} className="text-center py-20 text-slate-500 font-bold uppercase tracking-widest text-xs">Loading orders...</TableCell>
               </TableRow>
             ) : filteredOrders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-500">No orders found</TableCell>
+              <TableRow className="border-white/5">
+                <TableCell colSpan={6} className="text-center py-20 text-slate-500 font-bold uppercase tracking-widest text-xs">No orders found</TableCell>
               </TableRow>
             ) : (
               filteredOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium text-slate-900">#{order.id.slice(-8).toUpperCase()}</TableCell>
+                <TableRow key={order.id} className="border-white/5 hover:bg-white/[0.02] transition-colors">
+                  <TableCell className="px-8 py-6 font-black text-white uppercase tracking-tight">#{order.id.slice(-8).toUpperCase()}</TableCell>
                   <TableCell>
-                    <p className="font-medium text-slate-900">{order.userName}</p>
-                    <p className="text-sm text-slate-500">{order.userEmail}</p>
+                    <p className="font-black text-white uppercase tracking-tight text-sm">{order.userName}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{order.userEmail}</p>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-slate-400 font-bold text-xs uppercase tracking-widest">
                     {new Date(order.createdAt).toLocaleDateString('en-IN', {
                       year: 'numeric', month: 'short', day: 'numeric'
                     })}
                   </TableCell>
-                  <TableCell className="font-bold text-indigo-600">{formatPrice(order.totalAmount)}</TableCell>
+                  <TableCell className="font-black text-indigo-400">{formatPrice(order.totalAmount)}</TableCell>
                   <TableCell>
                     <Select value={order.status} onValueChange={(v) => handleStatusChange(order.id, v)}>
-                      <SelectTrigger className={`w-[130px] h-8 text-xs font-bold capitalize border-0 ${getStatusColor(order.status)}`}>
+                      <SelectTrigger className={`w-[140px] h-10 rounded-full text-[10px] font-black uppercase tracking-widest border-0 ${getStatusColor(order.status)}`}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="glass border-white/10 text-white rounded-2xl">
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="processing">Processing</SelectItem>
                         <SelectItem value="shipped">Shipped</SelectItem>
@@ -119,53 +119,65 @@ export const AdminOrders = () => {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right px-8">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="w-4 h-4 text-slate-500" />
+                        <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10">
+                          <Eye className="w-4 h-4 text-slate-400" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Order Details #{order.id.slice(-8).toUpperCase()}</DialogTitle>
+                      <DialogContent className="max-w-3xl glass border-white/10 rounded-[40px] p-10">
+                        <DialogHeader className="mb-8">
+                          <DialogTitle className="text-3xl font-black text-white uppercase tracking-tighter">Order Details #{order.id.slice(-8).toUpperCase()}</DialogTitle>
                         </DialogHeader>
-                        <div className="grid grid-cols-2 gap-8 py-4">
-                          <div>
-                            <h4 className="font-semibold text-slate-900 mb-2">Customer Info</h4>
-                            <div className="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg">
-                              <p className="font-medium text-slate-900">{order.userName}</p>
-                              <p>{order.userEmail}</p>
-                              <p className="mt-2 text-slate-900 font-medium">Shipping Address:</p>
-                              <p>{order.shippingAddress.address}</p>
-                              <p>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</p>
-                              <p>Phone: {order.shippingAddress.phone}</p>
+                        <div className="grid grid-cols-2 gap-12 py-4">
+                          <div className="space-y-6">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Customer Info</h4>
+                            <div className="glass p-6 rounded-3xl border-white/5 space-y-4">
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Name</p>
+                                <p className="text-white font-black uppercase tracking-tight">{order.userName}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Email</p>
+                                <p className="text-white font-bold text-sm">{order.userEmail}</p>
+                              </div>
+                              <div className="pt-4 border-t border-white/5">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Shipping Address</p>
+                                <p className="text-slate-300 text-sm leading-relaxed">{order.shippingAddress.address}</p>
+                                <p className="text-slate-300 text-sm">{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</p>
+                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">Phone: {order.shippingAddress.phone}</p>
+                              </div>
                             </div>
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-slate-900 mb-2">Order Summary</h4>
-                            <div className="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg space-y-2">
-                              <div className="flex justify-between"><span>Subtotal:</span> <span>{formatPrice(order.subtotal)}</span></div>
-                              <div className="flex justify-between"><span>Shipping:</span> <span>{formatPrice(order.shipping)}</span></div>
-                              <div className="flex justify-between"><span>Taxes:</span> <span>{formatPrice(order.taxes)}</span></div>
-                              <div className="flex justify-between pt-2 border-t font-bold text-slate-900">
-                                <span>Total:</span> <span className="text-indigo-600">{formatPrice(order.totalAmount)}</span>
+                          <div className="space-y-6">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Order Summary</h4>
+                            <div className="glass p-6 rounded-3xl border-white/5 space-y-4">
+                              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500"><span>Subtotal:</span> <span className="text-white">{formatPrice(order.subtotal)}</span></div>
+                              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500"><span>Shipping:</span> <span className="text-white">{formatPrice(order.shipping)}</span></div>
+                              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500"><span>Taxes:</span> <span className="text-white">{formatPrice(order.taxes)}</span></div>
+                              <div className="flex justify-between pt-4 border-t border-white/5">
+                                <span className="text-sm font-black text-white uppercase tracking-widest">Total:</span> 
+                                <span className="text-xl font-black text-indigo-400 tracking-tighter">{formatPrice(order.totalAmount)}</span>
                               </div>
-                              <div className="flex justify-between pt-2"><span>Payment:</span> <span className="uppercase">{order.paymentMethod}</span></div>
+                              <div className="flex justify-between pt-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Payment:</span> 
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white">{order.paymentMethod}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-slate-900 mb-2">Items ({order.items.length})</h4>
-                          <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        <div className="mt-8 space-y-6">
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Items ({order.items.length})</h4>
+                          <div className="space-y-4 max-h-60 overflow-y-auto pr-4 custom-scrollbar">
                             {order.items.map((item: any, idx: number) => (
-                              <div key={idx} className="flex items-center gap-4 bg-slate-50 p-3 rounded-lg">
-                                <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded object-cover" />
+                              <div key={idx} className="flex items-center gap-6 glass p-4 rounded-3xl border-white/5">
+                                <img src={item.imageUrl} alt={item.name} className="w-16 h-16 rounded-2xl object-cover glass border border-white/5" />
                                 <div className="flex-1">
-                                  <p className="font-medium text-slate-900 text-sm line-clamp-1">{item.name}</p>
-                                  <p className="text-xs text-slate-500">Qty: {item.quantity} × {formatPrice(item.price)}</p>
+                                  <p className="font-black text-white uppercase tracking-tight text-sm line-clamp-1">{item.name}</p>
+                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Qty: {item.quantity} × {formatPrice(item.price)}</p>
                                 </div>
-                                <div className="font-bold text-slate-900 text-sm">
+                                <div className="font-black text-white">
                                   {formatPrice(item.price * item.quantity)}
                                 </div>
                               </div>

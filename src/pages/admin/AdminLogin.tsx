@@ -48,50 +48,53 @@ export const AdminLogin = () => {
   };
 
   if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-[#050505] text-white font-bold uppercase tracking-widest text-xs">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
-      <div className="max-w-md w-full bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-700 text-center">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white tracking-tighter mb-2">LUMINA ADMIN</h1>
-          <p className="text-slate-400">Enter the secret passcode to access the dashboard</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#050505] px-4 relative overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-600/10 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-md w-full glass p-12 rounded-[40px] border-white/10 text-center relative z-10">
+        <div className="mb-12">
+          <h1 className="text-4xl font-black text-white tracking-tighter mb-4 uppercase italic">LUMINA ADMIN</h1>
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Enter the secret passcode to access the dashboard</p>
         </div>
 
         {!user ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-indigo-900/30 border border-indigo-800 rounded-lg text-left">
-              <p className="text-indigo-200 text-sm">
-                <strong>Step 1:</strong> You must be logged in with a normal account first before entering the admin passcode.
+          <div className="space-y-8">
+            <div className="p-6 glass border border-indigo-500/20 rounded-3xl text-left">
+              <p className="text-indigo-400 text-[10px] font-black uppercase tracking-widest leading-relaxed">
+                <span className="text-white">Step 1:</span> You must be logged in with a normal account first before entering the admin passcode.
               </p>
             </div>
             <Link to="/auth">
-              <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 h-12">
+              <Button className="w-full h-16 bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom font-black uppercase tracking-widest text-sm transition-all shadow-xl shadow-white/5">
                 Go to Normal Login
               </Button>
             </Link>
           </div>
         ) : (
-          <form onSubmit={handlePasscodeSubmit} className="space-y-4">
-            <div className="p-4 bg-slate-700/50 rounded-lg text-left mb-4">
-              <p className="text-slate-300 text-sm">
-                Logged in as: <strong>{user.email}</strong>
+          <form onSubmit={handlePasscodeSubmit} className="space-y-6">
+            <div className="p-6 glass border border-white/5 rounded-3xl text-left mb-8">
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                Logged in as: <span className="text-white">{user.email}</span>
               </p>
             </div>
-            <div>
+            <div className="space-y-2">
               <input
                 type="password"
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 placeholder="Enter Admin Passcode"
-                className="w-full h-12 px-4 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+                className="w-full h-16 px-8 glass border border-white/5 rounded-full-custom text-white font-bold placeholder:text-slate-700 focus:outline-none focus:border-indigo-500 transition-all"
                 required
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-12"
+              className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full-custom font-black uppercase tracking-widest text-sm shadow-xl shadow-indigo-600/20"
               disabled={loading || !passcode}
             >
               {loading ? 'Verifying...' : 'Grant Admin Access'}
