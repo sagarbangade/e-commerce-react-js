@@ -38,8 +38,8 @@ export const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/5 glass">
-      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-8">
+      <div className="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
+        <div className="flex items-center gap-4 md:gap-8">
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden rounded-full">
@@ -53,7 +53,7 @@ export const Navbar = () => {
             </SheetContent>
           </Sheet>
           
-          <Link to="/" className="text-2xl font-black tracking-[-0.05em] text-white uppercase">
+          <Link to="/" className="text-xl md:text-2xl font-black tracking-[-0.05em] text-white uppercase">
             LUMINA<span className="text-indigo-500">.</span>
           </Link>
           
@@ -62,12 +62,12 @@ export const Navbar = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           <Link to="/cart" className="relative">
-            <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 hover:bg-white/10">
-              <ShoppingBag className="h-5 w-5 text-white" />
+            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 md:h-12 md:w-12 hover:bg-white/10">
+              <ShoppingBag className="h-4 w-4 md:h-5 md:w-5 text-white" />
               {cartItemCount > 0 && (
-                <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[8px] font-black text-white">
+                <span className="absolute top-1 md:top-2 right-1 md:right-2 flex h-3 w-3 md:h-4 md:w-4 items-center justify-center rounded-full bg-indigo-500 text-[8px] font-black text-white">
                   {cartItemCount}
                 </span>
               )}
@@ -77,11 +77,11 @@ export const Navbar = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 overflow-hidden hover:bg-white/10">
+                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 md:h-12 md:w-12 overflow-hidden hover:bg-white/10">
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="Avatar" className="h-6 w-6 rounded-full" />
                   ) : (
-                    <User className="h-5 w-5 text-white" />
+                    <User className="h-4 w-4 md:h-5 md:w-5 text-white" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
@@ -100,7 +100,7 @@ export const Navbar = () => {
             </DropdownMenu>
           ) : (
             <Link to="/auth">
-              <Button variant="default" className="bg-white text-black hover:bg-indigo-500 hover:text-white rounded-full-custom h-10 px-8 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-white/5">
+              <Button variant="default" className="bg-white text-black hover:bg-indigo-500 hover:text-white rounded-full-custom h-8 md:h-10 px-4 md:px-8 text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-white/5">
                 Sign In
               </Button>
             </Link>

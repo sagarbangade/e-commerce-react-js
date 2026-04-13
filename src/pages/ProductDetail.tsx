@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Minus, Plus, ShoppingCart, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { VirtualTryOnModal } from '../components/shared/VirtualTryOnModal';
+import { ProductReviews } from '../components/shared/ProductReviews';
+
 export const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -73,8 +76,8 @@ export const ProductDetail = () => {
   const images = product.imageUrls || [product.imageUrl].filter(Boolean);
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mb-24">
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 mb-12 md:mb-24">
         {/* Image Gallery */}
         <div className="space-y-6">
           <div className="aspect-square rounded-[40px] overflow-hidden glass relative border border-white/10">
@@ -109,16 +112,16 @@ export const ProductDetail = () => {
         <div className="flex flex-col py-4">
           <div className="mb-8">
             <p className="text-indigo-400 font-black uppercase tracking-[0.2em] text-xs mb-3">{product.category}</p>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tighter uppercase">{product.name}</h1>
+            <h1 className="text-3xl md:text-5xl font-black text-white mb-4 md:mb-6 tracking-tighter uppercase">{product.name}</h1>
             <div className="flex items-center gap-6">
               <StarRating rating={product.rating} />
               <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">{product.reviewCount} Reviews</span>
             </div>
           </div>
 
-          <div className="mb-10 glass p-8 rounded-[32px] border-white/10">
+          <div className="mb-8 md:mb-10 glass p-6 md:p-8 rounded-[24px] md:rounded-[32px] border-white/10">
             <div className="flex items-end gap-4 mb-2">
-              <span className="text-5xl font-black text-white tracking-tighter">
+              <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">
                 {formatPrice(product.discountPrice || product.price)}
               </span>
               {product.discountPrice && (
@@ -166,35 +169,37 @@ export const ProductDetail = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-auto">
+          <div className="flex flex-row gap-2 md:gap-4 mt-auto">
             <Button 
               size="lg" 
               variant="outline" 
-              className="flex-1 h-16 text-sm font-black uppercase tracking-widest rounded-full-custom border-white/10 glass hover:bg-white/10"
+              className="flex-1 h-12 md:h-16 px-2 md:px-8 text-[10px] md:text-sm font-black uppercase tracking-widest rounded-full-custom border-white/10 glass hover:bg-white/10"
               onClick={handleAddToCart}
               disabled={product.stock === 0}
             >
-              <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+              <ShoppingCart className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Add to Cart
             </Button>
             <Button 
               size="lg" 
-              className="flex-1 h-16 text-sm font-black uppercase tracking-widest rounded-full-custom bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/20"
+              className="flex-1 h-12 md:h-16 px-2 md:px-8 text-[10px] md:text-sm font-black uppercase tracking-widest rounded-full-custom bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/20"
               onClick={handleBuyNow}
               disabled={product.stock === 0}
             >
-              <Zap className="mr-2 h-5 w-5" /> Buy Now
+              <Zap className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" /> Buy Now
             </Button>
           </div>
+          
+          <VirtualTryOnModal productName={product.name} productImageUrl={activeImage || product.imageUrl} />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mt-24 glass p-10 rounded-[40px] border-white/10">
+      <div className="mt-12 md:mt-24 glass p-6 md:p-10 rounded-[24px] md:rounded-[40px] border-white/10">
         <Tabs defaultValue="description" className="w-full">
-          <TabsList className="w-full justify-start border-b border-white/5 rounded-none h-auto p-0 bg-transparent mb-8">
-            <TabsTrigger value="description" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 rounded-none px-10 py-6 text-sm font-black uppercase tracking-widest text-slate-500 data-[state=active]:text-white">Description</TabsTrigger>
-            <TabsTrigger value="specifications" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 rounded-none px-10 py-6 text-sm font-black uppercase tracking-widest text-slate-500 data-[state=active]:text-white">Specifications</TabsTrigger>
-            <TabsTrigger value="reviews" className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 rounded-none px-10 py-6 text-sm font-black uppercase tracking-widest text-slate-500 data-[state=active]:text-white">Reviews ({product.reviewCount})</TabsTrigger>
+          <TabsList className="w-full justify-start border-none rounded-none h-auto p-0 bg-transparent mb-6 md:mb-8 overflow-x-auto flex-nowrap scrollbar-hide gap-2 md:gap-4">
+            <TabsTrigger value="description" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white bg-white/5 rounded-full-custom px-6 md:px-8 py-3 md:py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 whitespace-nowrap transition-all">Description</TabsTrigger>
+            <TabsTrigger value="specifications" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white bg-white/5 rounded-full-custom px-6 md:px-8 py-3 md:py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 whitespace-nowrap transition-all">Specifications</TabsTrigger>
+            <TabsTrigger value="reviews" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white bg-white/5 rounded-full-custom px-6 md:px-8 py-3 md:py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 whitespace-nowrap transition-all">Reviews ({product.reviewCount})</TabsTrigger>
           </TabsList>
           <TabsContent value="description" className="py-4">
             <p className="text-slate-400 leading-relaxed max-w-3xl font-light text-lg">{product.description}</p>
@@ -212,9 +217,7 @@ export const ProductDetail = () => {
             </div>
           </TabsContent>
           <TabsContent value="reviews" className="py-4">
-            <div className="max-w-3xl glass p-12 rounded-3xl border-white/5 text-center">
-              <p className="text-slate-500 font-bold uppercase tracking-[0.2em]">Reviews feature coming soon.</p>
-            </div>
+            <ProductReviews productId={product.id} />
           </TabsContent>
         </Tabs>
       </div>

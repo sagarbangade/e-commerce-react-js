@@ -45,7 +45,7 @@ export const Home = () => {
             <span className="inline-block px-6 py-2 mb-8 text-[10px] font-bold tracking-[0.3em] uppercase glass text-white rounded-full-custom">
               Lumina Collective • 2026
             </span>
-            <h1 className="text-[12vw] md:text-[10vw] font-black text-white leading-[0.85] tracking-[-0.04em] uppercase mb-8">
+            <h1 className="text-6xl md:text-[10vw] font-black text-white leading-[0.85] tracking-[-0.04em] uppercase mb-6 md:mb-8 mt-12 md:mt-0">
               Future <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-x">
                 Standard
@@ -54,14 +54,14 @@ export const Home = () => {
             <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-xl mx-auto font-light leading-relaxed">
               Curating the world's most exceptional products for those who demand more than just the ordinary.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Link to="/products">
-                <Button size="lg" className="bg-white text-black hover:bg-indigo-600 hover:text-white px-12 h-16 rounded-full-custom text-sm font-bold uppercase tracking-widest transition-all duration-500 group shadow-2xl shadow-white/10">
+            <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center">
+              <Link to="/products" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-white text-black hover:bg-indigo-600 hover:text-white px-8 md:px-12 h-14 md:h-16 rounded-full-custom text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-500 group shadow-2xl shadow-white/10">
                   Explore Collection <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/products?delivery=fast">
-                <Button size="lg" className="bg-yellow-400 text-black hover:bg-yellow-500 px-12 h-16 rounded-full-custom text-sm font-bold uppercase tracking-widest transition-all duration-500 shadow-2xl shadow-yellow-400/20">
+              <Link to="/products?delivery=fast" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-yellow-400 text-black hover:bg-yellow-500 px-8 md:px-12 h-14 md:h-16 rounded-full-custom text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-500 shadow-2xl shadow-yellow-400/20">
                   15 Min Delivery <Clock className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -71,9 +71,9 @@ export const Home = () => {
       </section>
 
       {/* 15 Min Delivery Section */}
-      <section className="py-32 bg-[#050505] overflow-hidden">
+      <section className="py-16 md:py-32 bg-[#050505] overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -81,7 +81,7 @@ export const Home = () => {
               className="relative"
             >
               <div className="absolute -top-20 -left-20 w-64 h-64 bg-indigo-600/20 rounded-full blur-[100px] opacity-50" />
-              <h2 className="text-6xl md:text-8xl font-black text-white leading-none tracking-tighter mb-8">
+              <h2 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter mb-6 md:mb-8">
                 FAST <br/>
                 <span className="text-yellow-400">15 MIN</span> <br/>
                 DELIVERY
@@ -89,7 +89,7 @@ export const Home = () => {
               <p className="text-xl text-slate-400 mb-12 max-w-md font-light">
                 Why wait? Get your essentials delivered to your doorstep in under 15 minutes. Available for select pin codes.
               </p>
-              <div className="flex flex-wrap gap-8">
+              <div className="flex flex-col sm:flex-row gap-4 md:gap-8">
                 <div className="flex items-center gap-4 glass p-4 rounded-2xl">
                   <div className="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center text-black shadow-lg shadow-yellow-400/20">
                     <Clock size={28} />
@@ -132,14 +132,14 @@ export const Home = () => {
       </section>
 
       {/* Categories - Brutalist Style */}
-      <section className="py-32 bg-[#050505]">
+      <section className="py-16 md:py-32 bg-[#050505]">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-20 gap-6">
             <div>
-              <span className="text-indigo-400 font-mono text-sm tracking-[0.3em] uppercase mb-4 block">Collections</span>
-              <h2 className="text-6xl font-black text-white tracking-tighter">SHOP BY CATEGORY</h2>
+              <span className="text-indigo-400 font-mono text-xs md:text-sm tracking-[0.3em] uppercase mb-4 block">Collections</span>
+              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">SHOP BY CATEGORY</h2>
             </div>
-            <Link to="/products" className="text-white hover:text-indigo-400 transition-colors font-bold uppercase tracking-widest text-sm flex items-center glass px-6 py-3 rounded-full-custom">
+            <Link to="/products" className="w-full md:w-auto text-center justify-center text-white hover:text-indigo-400 transition-colors font-bold uppercase tracking-widest text-xs md:text-sm flex items-center glass px-6 py-3 md:py-4 rounded-full-custom">
               View All <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
@@ -153,9 +153,9 @@ export const Home = () => {
                 >
                   <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90" />
-                  <div className="absolute bottom-0 left-0 w-full p-10 glass border-t border-white/10">
-                    <p className="text-indigo-400 font-mono text-xs mb-3">0{idx + 1}</p>
-                    <h3 className="text-4xl font-black text-white uppercase tracking-tighter group-hover:text-indigo-400 transition-colors">{cat.name}</h3>
+                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 glass border-t border-white/10">
+                    <p className="text-indigo-400 font-mono text-[10px] md:text-xs mb-2 md:mb-3">0{idx + 1}</p>
+                    <h3 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter group-hover:text-indigo-400 transition-colors">{cat.name}</h3>
                   </div>
                 </motion.div>
               </Link>
@@ -165,14 +165,14 @@ export const Home = () => {
       </section>
 
       {/* Featured Products */}
-      <section className="py-32 bg-[#050505]">
+      <section className="py-16 md:py-32 bg-[#050505]">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-20 gap-6">
             <div>
-              <span className="text-indigo-400 font-mono text-sm tracking-[0.3em] uppercase mb-4 block">Curated</span>
-              <h2 className="text-6xl font-black text-white tracking-tighter uppercase">The Spotlight</h2>
+              <span className="text-indigo-400 font-mono text-xs md:text-sm tracking-[0.3em] uppercase mb-4 block">Curated</span>
+              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase">The Spotlight</h2>
             </div>
-            <Link to="/products" className="text-white hover:text-indigo-400 transition-colors font-bold uppercase tracking-widest text-sm flex items-center glass px-6 py-3 rounded-full-custom">
+            <Link to="/products" className="w-full md:w-auto text-center justify-center text-white hover:text-indigo-400 transition-colors font-bold uppercase tracking-widest text-xs md:text-sm flex items-center glass px-6 py-3 md:py-4 rounded-full-custom">
               Shop All <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
