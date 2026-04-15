@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Clock } from 'lucide-react';
+import { Star, Clock, Heart } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -15,6 +15,10 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const addToCart = useStore((state) => state.addToCart);
+  const wishlist = useStore((state) => state.wishlist);
+  const toggleWishlist = useStore((state) => state.toggleWishlist);
+
+  const isWishlisted = wishlist.includes(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -26,6 +30,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       quantity: 1,
     });
     toast.success('Added to cart');
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toggleWishlist(product.id);
+    if (isWishlisted) {
+      toast('Removed from wishlist', { icon: '💔' });
+    } else {
+      toast.success('Added to wishlist!');
+    }
   };
 
   return (
@@ -51,6 +65,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           )}
         </div>
+
+        {/* Wishlist Button */}
+        <button
+          onClick={handleToggleWishlist}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full glass border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors z-10"
+        >
+          <Heart size={18} className={isWishlisted ? "fill-red-500 text-red-500" : "text-white"} />
+        </button>
  
         {/* Quick Add Overlay */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center p-8">

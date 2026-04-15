@@ -1,4 +1,10 @@
+let cachedToken: string | null = null;
+
 export const getAccessToken = (): Promise<string> => {
+  if (cachedToken) {
+    return Promise.resolve(cachedToken);
+  }
+
   const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
   if (!CLIENT_ID) {
     return Promise.reject(new Error("VITE_CLIENT_ID is not configured in environment variables."));
@@ -27,6 +33,7 @@ export const getAccessToken = (): Promise<string> => {
       if (event.origin !== window.location.origin) return;
       if (event.data && event.data.type === 'oauth_success' && event.data.response.access_token) {
         cleanup();
+        cachedToken = event.data.response.access_token;
         resolve(event.data.response.access_token);
       } else if (event.data && event.data.type === 'oauth_error') {
         cleanup();

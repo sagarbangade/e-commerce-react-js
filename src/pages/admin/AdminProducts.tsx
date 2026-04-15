@@ -14,8 +14,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../.
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../../components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Edit, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Edit, Plus, Trash2, Image as ImageIcon, Sparkles, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getAccessToken, generateContent, QuotaExceededError } from '../../utils/auth-utils';
 
 const CATEGORIES = ['Electronics', 'Fashion', 'Home & Living', 'Sports', 'Beauty', 'Books'];
 
@@ -25,6 +26,7 @@ export const AdminProducts = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingMagic, setIsGeneratingMagic] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -118,6 +120,84 @@ export const AdminProducts = () => {
         error: 'Failed to upload images',
       }
     );
+  };
+
+  const getBase64FromUrl = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const handleMagicGenerate = async () => {
+    if (formData.imageUrls.length === 0) {
+      toast.error('Please upload at least one image first to use AI Magic.');
+      return;
+    }
+
+    try {
+      setIsGeneratingMagic(true);
+      const accessToken = await getAccessToken();
+      
+      const base64Full = await getBase64FromUrl(formData.imageUrls[0]);
+      const base64Data = base64Full.split(',')[1];
+
+      const prompt = `You are an expert e-commerce copywriter. Analyze this product image and generate a JSON response with the following fields:
+      - name: A catchy, SEO-optimized product title.
+      - description: A detailed, persuasive product description highlighting key features, materials, and style.
+      - category: Choose the most appropriate category from this list ONLY: [Electronics, Fashion, Home & Living, Sports, Beauty, Books].
+      - price: A realistic estimated price in INR (number only).
+      
+      Output ONLY valid JSON.`;
+
+      const response = await generateContent(accessToken, {
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: 'image/jpeg'
+                }
+              },
+              { text: prompt }
+            ]
+          }
+        ]
+      });
+
+      const text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      // Extract JSON from potential markdown block
+      const jsonMatch = text.match(/```(?:json)?\n([\s\S]*?)\n```/) || [null, text];
+      const jsonString = jsonMatch[1].trim();
+      
+      const aiData = JSON.parse(jsonString);
+
+      setFormData(prev => ({
+        ...prev,
+        name: aiData.name || prev.name,
+        description: aiData.description || prev.description,
+        category: CATEGORIES.includes(aiData.category) ? aiData.category : prev.category,
+        price: aiData.price ? aiData.price.toString() : prev.price,
+      }));
+
+      toast.success('Magic generation complete!');
+    } catch (error: any) {
+      console.error('Magic generation error:', error);
+      if (error instanceof QuotaExceededError || error.name === 'QuotaExceededError') {
+        toast.error('AI quota exceeded. Please upgrade your plan.');
+      } else {
+        toast.error('Failed to generate product details.');
+      }
+    } finally {
+      setIsGeneratingMagic(false);
+    }
   };
 
   const removeImage = (index: number) => {
@@ -279,7 +359,20 @@ export const AdminProducts = () => {
           </SheetHeader>
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="space-y-4">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Product Images</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-4">Product Images</Label>
+                {formData.imageUrls.length > 0 && (
+                  <Button 
+                    type="button" 
+                    onClick={handleMagicGenerate} 
+                    disabled={isGeneratingMagic}
+                    className="h-8 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-full-custom text-[10px] font-black uppercase tracking-widest border border-indigo-500/20"
+                  >
+                    {isGeneratingMagic ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <Sparkles className="w-3 h-3 mr-2" />}
+                    Auto-Fill with AI
+                  </Button>
+                )}
+              </div>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 {formData.imageUrls.map((url, index) => (
                   <div key={index} className="relative aspect-square group">

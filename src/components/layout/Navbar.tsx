@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, LogOut, Menu, Clock } from 'lucide-react';
+import { ShoppingBag, User, LogOut, Menu, Clock, Heart } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useStore } from '../../store/useStore';
 import { auth } from '../../firebase/config';
@@ -19,6 +19,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
 
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const wishlistCount = useStore((state) => state.wishlist.length);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -64,6 +65,17 @@ export const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
+          <Link to="/wishlist" className="relative hidden sm:block">
+            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 md:h-12 md:w-12 hover:bg-white/10">
+              <Heart className="h-4 w-4 md:h-5 md:w-5 text-white" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1 md:top-2 right-1 md:right-2 flex h-3 w-3 md:h-4 md:w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-black text-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </Button>
+          </Link>
+
           <Link to="/cart" className="relative">
             <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 md:h-12 md:w-12 hover:bg-white/10">
               <ShoppingBag className="h-4 w-4 md:h-5 md:w-5 text-white" />
@@ -89,6 +101,9 @@ export const Navbar = () => {
               <DropdownMenuContent align="end" className="rounded-2xl glass border-white/10 text-white">
                 <DropdownMenuItem onClick={() => navigate('/profile')} className="text-xs font-bold uppercase tracking-widest focus:bg-white/10">
                   Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/wishlist')} className="text-xs font-bold uppercase tracking-widest focus:bg-white/10 sm:hidden">
+                  Wishlist ({wishlistCount})
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/orders')} className="text-xs font-bold uppercase tracking-widest focus:bg-white/10">
                   Orders

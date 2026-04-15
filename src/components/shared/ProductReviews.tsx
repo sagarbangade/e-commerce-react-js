@@ -4,8 +4,9 @@ import { db } from '../../firebase/config';
 import { useAuth } from '../../hooks/useAuth';
 import { StarRating } from './StarRating';
 import { Button } from '../ui/button';
-import { Star } from 'lucide-react';
+import { Star, Sparkles, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getAccessToken, generateContent, QuotaExceededError } from '../../utils/auth-utils';
 
 interface Review {
   id: string;
@@ -26,6 +27,8 @@ export const ProductReviews = ({ productId }: { productId: string }) => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -97,6 +100,42 @@ export const ProductReviews = ({ productId }: { productId: string }) => {
     }
   };
 
+  const handleSummarize = async () => {
+    if (reviews.length === 0) return;
+    
+    try {
+      setIsSummarizing(true);
+      const accessToken = await getAccessToken();
+      
+      const reviewsText = reviews.map(r => `Rating: ${r.rating}/5 - ${r.comment}`).join('\n');
+      const prompt = `You are an AI assistant for an e-commerce store. Read the following customer reviews for a product and write a concise, 2-sentence summary of the overall sentiment. Highlight the main pros and cons. Keep it professional and helpful for future buyers.\n\nReviews:\n${reviewsText}`;
+
+      const response = await generateContent(accessToken, {
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }]
+          }
+        ]
+      });
+
+      const generatedSummary = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (generatedSummary) {
+        setSummary(generatedSummary);
+      }
+    } catch (error: any) {
+      console.error('Summarize error:', error);
+      if (error instanceof QuotaExceededError || error.name === 'QuotaExceededError') {
+        toast.error('AI quota exceeded. Please upgrade your plan.');
+      } else {
+        toast.error('Failed to summarize reviews.');
+      }
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8 text-slate-500 text-xs font-bold uppercase tracking-widest animate-pulse">Loading reviews...</div>;
   }
@@ -105,15 +144,42 @@ export const ProductReviews = ({ productId }: { productId: string }) => {
     <div className="max-w-3xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h3 className="text-xl font-black text-white uppercase tracking-tighter">Customer Reviews</h3>
-        {!showForm && (
-          <Button 
-            onClick={() => setShowForm(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full-custom text-xs font-black uppercase tracking-widest px-6"
-          >
-            Write a Review
-          </Button>
-        )}
+        <div className="flex gap-3">
+          {reviews.length > 0 && (
+            <Button 
+              onClick={handleSummarize}
+              disabled={isSummarizing}
+              variant="outline"
+              className="glass border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 rounded-full-custom text-xs font-black uppercase tracking-widest px-6"
+            >
+              {isSummarizing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              AI Summary
+            </Button>
+          )}
+          {!showForm && (
+            <Button 
+              onClick={() => setShowForm(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full-custom text-xs font-black uppercase tracking-widest px-6"
+            >
+              Write a Review
+            </Button>
+          )}
+        </div>
       </div>
+
+      {summary && (
+        <div className="glass p-6 rounded-3xl border border-indigo-500/30 bg-indigo-500/5 mb-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <Sparkles className="w-24 h-24 text-indigo-400" />
+          </div>
+          <div className="relative z-10">
+            <h4 className="text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center">
+              <Sparkles className="w-3 h-3 mr-1" /> AI Review Summary
+            </h4>
+            <p className="text-slate-300 text-sm leading-relaxed font-medium">{summary}</p>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="glass p-6 md:p-8 rounded-[24px] md:rounded-[32px] border-white/10 mb-10">

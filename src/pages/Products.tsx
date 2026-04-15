@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
 import { ProductCard } from '../components/shared/ProductCard';
@@ -7,9 +7,11 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Search, SlidersHorizontal, Clock } from 'lucide-react';
+import { Search, SlidersHorizontal, Clock, Sparkles, Loader2, Camera } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '../components/ui/sheet';
+import { getAccessToken, generateContent, QuotaExceededError } from '../utils/auth-utils';
+import toast from 'react-hot-toast';
 
 const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Home & Living', 'Sports', 'Beauty', 'Books'];
 
@@ -27,6 +29,15 @@ export const Products = () => {
   const [inStockOnly, setInStockOnly] = useState(false);
   const [fastDeliveryOnly, setFastDeliveryOnly] = useState(searchParams.get('delivery') === 'fast');
   const [sortBy, setSortBy] = useState('newest');
+  
+  // Vibe Search State
+  const [isVibeSearch, setIsVibeSearch] = useState(false);
+  const [isSearchingVibe, setIsSearchingVibe] = useState(false);
+  const [vibeMatches, setVibeMatches] = useState<string[] | null>(null);
+  
+  // Visual Search State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isVisualSearching, setIsVisualSearching] = useState(false);
 
   useEffect(() => {
     if (initialCategory !== category) {
@@ -51,7 +62,14 @@ export const Products = () => {
 
     // Search filter
     if (search) {
-      result = result.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+      if (isVibeSearch && vibeMatches) {
+        result = result.filter(p => vibeMatches.includes(p.id));
+      } else if (!isVibeSearch) {
+        result = result.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+      }
+    } else {
+      // If search is cleared, reset vibe matches
+      if (vibeMatches !== null) setVibeMatches(null);
     }
 
     // Price filter
@@ -88,7 +106,152 @@ export const Products = () => {
     }
 
     setFilteredProducts(result);
-  }, [products, category, search, priceRange, inStockOnly, fastDeliveryOnly, sortBy]);
+  }, [products, category, search, priceRange, inStockOnly, fastDeliveryOnly, sortBy, isVibeSearch, vibeMatches]);
+
+  const handleVibeSearch = async () => {
+    if (!search.trim()) return;
+    
+    try {
+      setIsSearchingVibe(true);
+      const accessToken = await getAccessToken();
+      
+      const availableProducts = products.map(p => ({ 
+        id: p.id, 
+        name: p.name, 
+        category: p.category, 
+        description: p.description 
+      }));
+
+      const prompt = `You are an AI personal shopper. The user is searching for a specific "vibe", aesthetic, or occasion: "${search}".
+      
+      Here is the catalog of available products:
+      ${JSON.stringify(availableProducts)}
+
+      Find all products that match this vibe/aesthetic. Return ONLY a JSON array of the matching product IDs. Example: ["id1", "id2"]`;
+
+      const response = await generateContent(accessToken, {
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }]
+          }
+        ]
+      });
+
+      const text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      const jsonMatch = text.match(/\[.*\]/s) || [null, text];
+      const jsonString = jsonMatch[0];
+      
+      const matchedIds: string[] = JSON.parse(jsonString);
+      setVibeMatches(matchedIds);
+      
+      if (matchedIds.length === 0) {
+        toast('No exact vibe matches found, try a different description.', { icon: '🤔' });
+      } else {
+        toast.success(`Found ${matchedIds.length} matches for your vibe!`);
+      }
+    } catch (error: any) {
+      console.error('Vibe search error:', error);
+      if (error instanceof QuotaExceededError || error.name === 'QuotaExceededError') {
+        toast.error('AI quota exceeded. Please upgrade your plan.');
+      } else {
+        toast.error('Failed to perform vibe search.');
+      }
+      // Fallback to normal search
+      setIsVibeSearch(false);
+    } finally {
+      setIsSearchingVibe(false);
+    }
+  };
+
+  const handleVisualSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsVisualSearching(true);
+      toast('Analyzing image...', { icon: '📸' });
+      const accessToken = await getAccessToken();
+
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      });
+      reader.readAsDataURL(file);
+      const base64Data = await base64Promise;
+
+      const prompt = `Analyze this image and describe the main clothing item or aesthetic in exactly 3 to 5 words. Do not use full sentences. Example: "vintage red leather jacket" or "minimalist office wear".`;
+
+      const response = await generateContent(accessToken, {
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: file.type
+                }
+              }
+            ]
+          }
+        ]
+      });
+
+      const query = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      if (query) {
+        setSearch(query);
+        setIsVibeSearch(true);
+        toast.success(`Searching for: ${query}`);
+        // We need to trigger the vibe search with this new query.
+        // Since state updates are async, we'll just call the API directly here for the second step.
+        
+        const availableProducts = products.map(p => ({ 
+          id: p.id, 
+          name: p.name, 
+          category: p.category, 
+          description: p.description 
+        }));
+
+        const searchPrompt = `You are an AI personal shopper. The user is searching for a specific "vibe", aesthetic, or occasion: "${query}".
+        
+        Here is the catalog of available products:
+        ${JSON.stringify(availableProducts)}
+
+        Find all products that match this vibe/aesthetic. Return ONLY a JSON array of the matching product IDs. Example: ["id1", "id2"]`;
+
+        const searchResponse = await generateContent(accessToken, {
+          model: 'gemini-2.5-flash',
+          contents: [{ role: 'user', parts: [{ text: searchPrompt }] }]
+        });
+
+        const text = searchResponse.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+        const jsonMatch = text.match(/\[.*\]/s) || [null, text];
+        const jsonString = jsonMatch[0];
+        
+        const matchedIds: string[] = JSON.parse(jsonString);
+        setVibeMatches(matchedIds);
+        
+        if (matchedIds.length === 0) {
+          toast('No exact matches found for this image.', { icon: '🤔' });
+        }
+      }
+    } catch (error: any) {
+      console.error('Visual search error:', error);
+      if (error instanceof QuotaExceededError || error.name === 'QuotaExceededError') {
+        toast.error('AI quota exceeded. Please upgrade your plan.');
+      } else {
+        toast.error('Failed to analyze image.');
+      }
+    } finally {
+      setIsVisualSearching(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const FilterContent = () => (
     <div className="space-y-10">
@@ -177,14 +340,63 @@ export const Products = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-            <Input
-              placeholder="Search the collection..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-11 h-12 rounded-full-custom border-white/10 glass focus:ring-0 focus:border-indigo-500 transition-all text-white placeholder:text-slate-600"
+          <div className="relative w-full sm:w-80 flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <Input
+                placeholder={isVibeSearch ? "Describe a vibe (e.g. cozy rainy day)..." : "Search the collection..."}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  if (isVibeSearch) setVibeMatches(null); // Reset matches when typing
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && isVibeSearch) {
+                    handleVibeSearch();
+                  }
+                }}
+                className={`pl-11 h-12 rounded-full-custom border-white/10 glass focus:ring-0 transition-all text-white placeholder:text-slate-600 ${isVibeSearch ? 'focus:border-purple-500 pr-12' : 'focus:border-indigo-500'}`}
+              />
+              {isVibeSearch && search && (
+                <button 
+                  onClick={handleVibeSearch}
+                  disabled={isSearchingVibe}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full transition-colors"
+                >
+                  {isSearchingVibe ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                </button>
+              )}
+            </div>
+            
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleVisualSearch}
             />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isVisualSearching}
+              className="h-12 px-4 rounded-full-custom border-white/10 glass text-slate-400 hover:text-white transition-all"
+              title="Snap & Shop (Visual Search)"
+            >
+              {isVisualSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsVibeSearch(!isVibeSearch);
+                setSearch('');
+                setVibeMatches(null);
+              }}
+              className={`h-12 px-4 rounded-full-custom border-white/10 transition-all ${isVibeSearch ? 'bg-purple-600/20 text-purple-400 border-purple-500/30' : 'glass text-slate-400 hover:text-white'}`}
+              title="Toggle AI Vibe Search"
+            >
+              <Sparkles className="w-4 h-4" />
+            </Button>
           </div>
           
           <div className="flex gap-2">

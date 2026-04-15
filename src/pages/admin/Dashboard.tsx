@@ -6,8 +6,9 @@ import { formatPrice } from '../../utils/helpers';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, ShoppingBag, Users, Package } from 'lucide-react';
+import { DollarSign, ShoppingBag, Users, Package, Sparkles, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getAccessToken, generateContent, QuotaExceededError } from '../../utils/auth-utils';
 
 export const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -20,6 +21,8 @@ export const Dashboard = () => {
   const [lowStock, setLowStock] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiReport, setAiReport] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -81,14 +84,80 @@ export const Dashboard = () => {
     setIsSeeding(false);
   };
 
+  const handleAIAnalysis = async () => {
+    try {
+      setIsAnalyzing(true);
+      const accessToken = await getAccessToken();
+
+      const prompt = `You are Lumina's AI Business Analyst. Here is the current state of the e-commerce store:
+      
+      Total Revenue: ${stats.revenue}
+      Total Orders: ${stats.orders}
+      Total Products: ${stats.products}
+      Active Users: ${stats.users}
+      
+      Monthly Data: ${JSON.stringify(chartData)}
+      Low Stock Items: ${JSON.stringify(lowStock.map(p => ({ name: p.name, stock: p.stock })))}
+      
+      Write a concise, 3-paragraph business report. 
+      Paragraph 1: Executive summary of performance.
+      Paragraph 2: Insights on sales trends.
+      Paragraph 3: Actionable recommendations (e.g., restock warnings, marketing ideas).
+      Format with bold text for emphasis.`;
+
+      const response = await generateContent(accessToken, {
+        model: 'gemini-2.5-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+      });
+
+      const report = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (report) {
+        setAiReport(report);
+        toast.success('Analysis complete!');
+      }
+    } catch (error: any) {
+      console.error('AI Analysis error:', error);
+      if (error instanceof QuotaExceededError || error.name === 'QuotaExceededError') {
+        toast.error('AI quota exceeded. Please upgrade your plan.');
+      } else {
+        toast.error('Failed to generate analysis.');
+      }
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div className="p-12 bg-[#050505] min-h-screen">
       <div className="flex justify-between items-center mb-12">
         <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Dashboard</h1>
-        <Button onClick={handleSeed} disabled={isSeeding} className="bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom px-8 h-12 font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-white/5">
-          {isSeeding ? 'Seeding...' : 'Seed Database'}
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={handleAIAnalysis} disabled={isAnalyzing} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full-custom px-8 h-12 font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-indigo-600/20">
+            {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+            AI Analyst
+          </Button>
+          <Button onClick={handleSeed} disabled={isSeeding} className="bg-white text-black hover:bg-indigo-600 hover:text-white rounded-full-custom px-8 h-12 font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-white/5">
+            {isSeeding ? 'Seeding...' : 'Seed Database'}
+          </Button>
+        </div>
       </div>
+
+      {aiReport && (
+        <div className="mb-12 glass p-8 rounded-[40px] border-indigo-500/30 bg-indigo-500/5 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/40">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-2xl font-black text-white uppercase tracking-tighter">AI Business Report</h2>
+          </div>
+          <div className="prose prose-invert max-w-none prose-p:text-slate-300 prose-strong:text-white prose-strong:font-black">
+            {aiReport.split('\n\n').map((paragraph, idx) => (
+              <p key={idx} dangerouslySetInnerHTML={{ __html: paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
         <Card className="glass border-white/5 rounded-[32px] overflow-hidden">

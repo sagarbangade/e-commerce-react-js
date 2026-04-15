@@ -5,12 +5,14 @@ import { Footer } from './components/layout/Footer';
 import { AdminSidebar } from './components/layout/AdminSidebar';
 import { ProtectedRoute } from './components/shared/ProtectedRoute';
 import { AdminRoute } from './components/shared/AdminRoute';
+import { AIStylistChat } from './components/shared/AIStylistChat';
 
 // Pages
 import { Home } from './pages/Home';
 import { Products } from './pages/Products';
 import { ProductDetail } from './pages/ProductDetail';
 import { Cart } from './pages/Cart';
+import { Wishlist } from './pages/Wishlist';
 import { Checkout } from './pages/Checkout';
 import { Orders } from './pages/Orders';
 import { Profile } from './pages/Profile';
@@ -29,6 +31,7 @@ const MainLayout = () => (
       <Outlet />
     </main>
     <Footer />
+    <AIStylistChat />
   </div>
 );
 
@@ -52,6 +55,7 @@ export default function App() {
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/auth" element={<Auth />} />
           
           {/* Protected Customer Routes */}

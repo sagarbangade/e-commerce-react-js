@@ -9,11 +9,13 @@ import { StarRating } from '../components/shared/StarRating';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Minus, Plus, ShoppingCart, Zap } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Zap, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { VirtualTryOnModal } from '../components/shared/VirtualTryOnModal';
 import { ProductReviews } from '../components/shared/ProductReviews';
+import { CompleteTheLook } from '../components/shared/CompleteTheLook';
+import { useProducts } from '../hooks/useProducts';
 
 export const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,8 +24,13 @@ export const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState('');
+  const { products: allProducts } = useProducts();
   
   const addToCart = useStore((state) => state.addToCart);
+  const wishlist = useStore((state) => state.wishlist);
+  const toggleWishlist = useStore((state) => state.toggleWishlist);
+
+  const isWishlisted = product ? wishlist.includes(product.id) : false;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -111,8 +118,25 @@ export const ProductDetail = () => {
         {/* Product Info */}
         <div className="flex flex-col py-4">
           <div className="mb-8">
-            <p className="text-indigo-400 font-black uppercase tracking-[0.2em] text-xs mb-3">{product.category}</p>
-            <h1 className="text-3xl md:text-5xl font-black text-white mb-4 md:mb-6 tracking-tighter uppercase">{product.name}</h1>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-indigo-400 font-black uppercase tracking-[0.2em] text-xs mb-3">{product.category}</p>
+                <h1 className="text-3xl md:text-5xl font-black text-white mb-4 md:mb-6 tracking-tighter uppercase">{product.name}</h1>
+              </div>
+              <button 
+                onClick={() => {
+                  toggleWishlist(product.id);
+                  if (isWishlisted) {
+                    toast('Removed from wishlist', { icon: '💔' });
+                  } else {
+                    toast.success('Added to wishlist!');
+                  }
+                }}
+                className="w-12 h-12 rounded-full glass border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
+              >
+                <Heart size={24} className={isWishlisted ? "fill-red-500 text-red-500" : "text-white"} />
+              </button>
+            </div>
             <div className="flex items-center gap-6">
               <StarRating rating={product.rating} />
               <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">{product.reviewCount} Reviews</span>
@@ -192,6 +216,9 @@ export const ProductDetail = () => {
           <VirtualTryOnModal productName={product.name} productImageUrl={activeImage || product.imageUrl} />
         </div>
       </div>
+
+      {/* Complete the Look */}
+      <CompleteTheLook currentProduct={product} allProducts={allProducts} />
 
       {/* Tabs */}
       <div className="mt-12 md:mt-24 glass p-6 md:p-10 rounded-[24px] md:rounded-[40px] border-white/10">

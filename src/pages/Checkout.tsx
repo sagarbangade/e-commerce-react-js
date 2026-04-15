@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../hooks/useAuth';
 import { useStore } from '../store/useStore';
@@ -73,8 +73,27 @@ export const Checkout = () => {
       };
 
       await addDoc(collection(db, 'orders'), orderData);
+
+      // Award Loyalty Points (Lumina Coins) - 10% of subtotal
+      const pointsEarned = Math.floor(subtotal * 0.10);
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          luminaCoins: (userSnap.data().luminaCoins || 0) + pointsEarned
+        });
+      } else {
+        await setDoc(userRef, {
+          email: user.email,
+          name: user.displayName || shippingData.fullName,
+          luminaCoins: pointsEarned,
+          createdAt: new Date().toISOString()
+        });
+      }
+
       clearCart();
-      toast.success('Order placed successfully!');
+      toast.success(`Order placed! You earned ${pointsEarned} Lumina Coins ✨`);
       navigate('/orders');
     } catch (error) {
       console.error('Error placing order:', error);
